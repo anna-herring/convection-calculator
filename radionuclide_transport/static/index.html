@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Radionuclide Transport Regime Calculator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{--accent:#2563eb;--bg:#f1f5f9;--card:#fff;--border:#cbd5e1;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;background:var(--bg);color:#1e293b;font-size:14px}
+  h1{background:var(--accent);color:#fff;padding:12px 20px;font-size:1.1rem;letter-spacing:.03em}
+  .layout{display:flex;height:calc(100vh - 42px)}
+  .sidebar{width:270px;min-width:200px;background:var(--card);border-right:1px solid var(--border);overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .sidebar h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:2px}
+  label{display:block;font-size:.78rem;color:#475569;margin-bottom:2px;margin-top:6px}
+  input[type=number],select{width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:4px;font-size:.82rem}
+  .kd-group{display:flex;gap:4px;margin-top:4px}
+  .kd-btn{flex:1;padding:4px;border:1px solid var(--border);border-radius:4px;background:#f8fafc;cursor:pointer;font-size:.75rem;text-align:center}
+  .kd-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .rn-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px}
+  .rn-cb{display:flex;align-items:center;gap:4px;font-size:.78rem}
+  .run-btn{margin-top:10px;width:100%;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:.85rem;font-weight:600}
+  .run-btn:hover{background:#1d4ed8}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .tab-bar{display:flex;background:var(--card);border-bottom:1px solid var(--border)}
+  .tab{padding:10px 16px;cursor:pointer;font-size:.82rem;border-bottom:3px solid transparent;color:#64748b;white-space:nowrap}
+  .tab.active{border-color:var(--accent);color:var(--accent);font-weight:600}
+  .tab-content{flex:1;overflow:auto;padding:16px;display:none}
+  .tab-content.active{display:block}
+  table{border-collapse:collapse;width:100%;font-size:.78rem}
+  th{background:#f8fafc;border:1px solid var(--border);padding:6px 8px;text-align:left;position:sticky;top:0;z-index:1}
+  td{border:1px solid var(--border);padding:5px 8px;vertical-align:top}
+  tr:hover td{background:#f0f9ff}
+  .badge{display:inline-block;padding:2px 6px;border-radius:10px;font-size:.7rem;font-weight:600;color:#fff}
+  .badge-diff{background:#7c3aed}.badge-adv{background:#2563eb}.badge-disp{background:#0891b2}
+  .badge-ok{background:var(--ok)}.badge-warn{background:var(--warn)}.badge-bad{background:var(--bad)}
+  .sub-table{margin-top:4px;width:100%;border-collapse:collapse}
+  .sub-table td{background:#f8fafc;border:1px solid #e2e8f0;padding:3px 6px;font-size:.72rem}
+  .hint{font-size:.72rem;color:#64748b;margin-top:6px;padding:6px 8px;background:#f8fafc;border-left:3px solid var(--accent);border-radius:2px}
+  .conv-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .conv-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px}
+  .conv-card h3{font-size:.85rem;color:#1e293b;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:6px}
+  .kv{display:flex;justify-content:space-between;margin-bottom:5px;font-size:.8rem}
+  .kv span:first-child{color:#64748b}
+  .kv span:last-child{font-weight:600}
+  .status-badge{padding:4px 14px;border-radius:12px;font-weight:700;font-size:.88rem;color:#fff;display:inline-block}
+  .status-sub{background:var(--ok)}.status-onset{background:var(--warn)}.status-conv{background:var(--bad)}
+  .decay-table{width:100%;font-size:.76rem;border-collapse:collapse}
+  .decay-table th{background:#f1f5f9;padding:4px 8px;border:1px solid var(--border)}
+  .decay-table td{padding:4px 8px;border:1px solid var(--border)}
+  #compChart{max-height:420px}
+  .chart-note{font-size:.74rem;color:#64748b;margin-top:10px}
+  .err{color:var(--bad);background:#fef2f2;border:1px solid #fecaca;padding:10px;border-radius:5px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<h1>Radionuclide Transport Regime Calculator</h1>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div>
+    <h2>Conditions</h2>
+    <label>Temperature (°C)</label>
+    <input type="number" id="T_C" value="25" min="0" max="350" step="1"/>
+    <label>Pressure (MPa)</label>
+    <input type="number" id="P_MPa" value="10" min="0.1" max="100" step="0.1"/>
+    <label>Eh (mV)</label>
+    <input type="number" id="Eh_mV" value="200" min="-500" max="800" step="10"/>
+    <label>pH</label>
+    <input type="number" id="pH" value="7" min="0" max="14" step="0.1"/>
+    <label>Salinity (g/L)</label>
+    <input type="number" id="salinity" value="10" min="0" max="350" step="1"/>
+  </div>
+
+  <div id="advection-params">
+    <h2>Fracture / Flow</h2>
+    <label title="Pore-water velocity in fracture (aqueous phase)">Interstitial velocity — aqueous phase (m/s)</label>
+    <input type="number" id="v_m_s" value="1e-8" min="1e-15" max="1e-2" step="any"/>
+    <label>Fracture porosity</label>
+    <input type="number" id="porosity" value="0.05" min="0.001" max="0.6" step="0.001"/>
+    <label>Tortuosity</label>
+    <input type="number" id="tortuosity" value="2" min="1" max="20" step="0.1"/>
+    <label>Longitudinal dispersivity &alpha;<sub>L</sub> (m)</label>
+    <input type="number" id="dispersivity" value="0.01" min="1e-6" max="1000" step="any"/>
+    <label title="Path length of interest (fracture length or distance to receptor). Used for Pe and Da. Defaults to 1 m as unit reference.">
+      Characteristic length L (m) <span style="cursor:help;color:var(--accent)" title="Set to fracture length or distance to receptor for meaningful Pe and Da numbers. 1 m is a unit reference default.">ⓘ</span>
+    </label>
+    <input type="number" id="char_len" value="1" min="1e-4" max="1e6" step="any"/>
+  </div>
+
+  <div id="conv-params" style="display:none">
+    <h2>Convection Inputs</h2>
+    <label>Thermal gradient dT/dz (°C/m)</label>
+    <input type="number" id="dT_dz" value="0.03" min="0" max="200" step="0.001"/>
+    <label>Domain height H (m)</label>
+    <input type="number" id="H_m" value="100" min="0.1" max="10000" step="1"/>
+    <label>Fracture aperture b (&mu;m)</label>
+    <input type="number" id="aperture_um" value="100" min="1" max="10000" step="1"/>
+  </div>
+
+  <div id="multiphase-params" style="display:none">
+    <h2>Gas Phase</h2>
+    <label>Gas / supercritical fluid</label>
+    <select id="gas_fluid"></select>
+    <label>Water saturation S<sub>w</sub></label>
+    <input type="number" id="S_w" value="0.7" min="0.05" max="1" step="0.01"/>
+    <label>Dip angle &theta; (&deg;)</label>
+    <input type="number" id="theta_deg" value="10" min="0" max="89" step="1"/>
+  </div>
+
+  <div>
+    <h2>Formation</h2>
+    <label>Rock type</label>
+    <select id="rock_type"></select>
+  </div>
+
+  <div id="kd-section">
+    <h2>Kd Scenario</h2>
+    <div class="kd-group">
+      <div class="kd-btn" data-kd="low" onclick="setKd('low',this)">Conservative</div>
+      <div class="kd-btn active" data-kd="mean" onclick="setKd('mean',this)">Mean</div>
+      <div class="kd-btn" data-kd="high" onclick="setKd('high',this)">Generous</div>
+    </div>
+    <div class="hint" style="margin-top:6px">Conservative &asymp;10th %ile (low Kd, fast migration). Generous &asymp;90th %ile (high retention). All three values always shown in results table.</div>
+  </div>
+
+  <div>
+    <h2>Radionuclides</h2>
+    <div class="rn-grid" id="rn-grid"></div>
+  </div>
+
+  <button class="run-btn" onclick="runCalc()">Calculate &#9654;</button>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('sp')">Single Phase Advection</div>
+    <div class="tab" onclick="switchTab('mp')">Multiphase Advection</div>
+    <div class="tab" onclick="switchTab('cv')">Single Phase Convection</div>
+    <div class="tab" onclick="switchTab('tc')">Transport Comparison</div>
+  </div>
+
+  <div class="tab-content active" id="tab-sp">
+    <div id="sp-err" class="err" style="display:none"></div>
+    <div id="sp-out"><p style="color:#94a3b8;margin-top:30px;text-align:center">Configure inputs and click Calculate.</p></div>
+  </div>
+
+  <div class="tab-content" id="tab-mp">
+    <div id="mp-err" class="err" style="display:none"></div>
+    <div id="mp-out"><p style="color:#94a3b8;margin-top:30px;text-align:center">Configure inputs and click Calculate.</p></div>
+  </div>
+
+  <div class="tab-content" id="tab-cv">
+    <div id="cv-err" class="err" style="display:none"></div>
+    <div id="cv-out"><p style="color:#94a3b8;margin-top:30px;text-align:center">Configure inputs and click Calculate.</p></div>
+  </div>
+
+  <div class="tab-content" id="tab-tc">
+    <div id="tc-err" class="err" style="display:none"></div>
+    <div id="tc-out"><p style="color:#94a3b8;margin-top:30px;text-align:center">Switch to this tab and click Calculate to run all three Kd scenarios.</p></div>
+  </div>
+</div>
+</div>
+
+<script>
+const BASE="";
+let meta={};
+let kdScenario="mean";
+let currentTab="sp";
+let compChart=null;
+
+async function init(){
+  const r=await fetch(BASE+"/api/metadata");
+  meta=await r.json();
+  const rs=document.getElementById("rock_type");
+  meta.rock_types.forEach(t=>{
+    const o=document.createElement("option");o.value=t;o.textContent=t[0].toUpperCase()+t.slice(1);rs.appendChild(o);
+  });
+  const gs=document.getElementById("gas_fluid");
+  Object.entries(meta.gas_fluids).forEach(([k,v])=>{
+    const o=document.createElement("option");o.value=k;o.textContent=v.label;gs.appendChild(o);
+  });
+  const grid=document.getElementById("rn-grid");
+  const def=["Cs","Sr","I","Tc","U"];
+  Object.entries(meta.radionuclides).forEach(([id,v])=>{
+    const d=document.createElement("div");d.className="rn-cb";
+    d.innerHTML=`<input type="checkbox" id="rn_${id}" value="${id}" ${def.includes(id)?"checked":""}/>
+      <label for="rn_${id}" style="margin:0;cursor:pointer">${v.label}</label>`;
+    grid.appendChild(d);
+  });
+}
+
+function setKd(s,el){
+  kdScenario=s;
+  document.querySelectorAll(".kd-btn").forEach(b=>b.classList.remove("active"));
+  el.classList.add("active");
+}
+
+function switchTab(t){
+  currentTab=t;
+  document.querySelectorAll(".tab").forEach(e=>e.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(e=>e.classList.remove("active"));
+  const tabs=["sp","mp","cv","tc"];
+  document.querySelectorAll(".tab")[tabs.indexOf(t)].classList.add("active");
+  document.getElementById("tab-"+t).classList.add("active");
+  const isConv=t==="cv", isMp=t==="mp", isComp=t==="tc";
+  document.getElementById("advection-params").style.display=(isConv||isComp)?"none":"block";
+  document.getElementById("conv-params").style.display=isConv?"block":"none";
+  document.getElementById("multiphase-params").style.display=isMp?"block":"none";
+  document.getElementById("kd-section").style.display=isConv?"none":"block";
+}
+
+function getRns(){return[...document.querySelectorAll("#rn-grid input:checked")].map(x=>x.value);}
+function g(id){return document.getElementById(id)?.value||"";}
+function fmt(v,d=3){if(v==null||v===""||isNaN(+v))return"–";return(+v).toPrecision(d);}
+function fmtE(v){if(v==null||v===""||isNaN(+v))return"–";return(+v).toExponential(2);}
+function showErr(tab,msg){
+  const el=document.getElementById(tab+"-err");
+  if(!el)return;
+  el.style.display=msg?"block":"none";
+  if(msg)el.textContent="Error: "+msg;
+}
+
+async function runCalc(){
+  if(currentTab==="sp") await runSP();
+  else if(currentTab==="mp") await runMP();
+  else if(currentTab==="cv") await runCV();
+  else if(currentTab==="tc") await runTC();
+}
+
+// ── Single Phase Advection ────────────────────────────────
+async function runSP(){
+  const body={
+    T_C:+g("T_C"),P_MPa:+g("P_MPa"),v_m_s:+g("v_m_s"),
+    rn_ids:getRns(),rock_type:g("rock_type"),porosity:+g("porosity"),
+    tortuosity:+g("tortuosity"),dispersivity_m:+g("dispersivity"),
+    char_len_m:+g("char_len"),Eh_mV:+g("Eh_mV"),pH:+g("pH"),
+    salinity_g_L:+g("salinity"),kd_scenario:kdScenario,
+  };
+  try{
+    const r=await fetch(BASE+"/api/single-phase",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(!r.ok){const e=await r.json();throw new Error(e.detail||JSON.stringify(e));}
+    const d=await r.json();
+    showErr("sp",null);
+    renderAdvTable("sp-out",d,false,+g("porosity"));
+  }catch(e){showErr("sp",e.message);console.error(e);}
+}
+
+// ── Multiphase Advection ──────────────────────────────────
+async function runMP(){
+  const body={
+    T_C:+g("T_C"),P_MPa:+g("P_MPa"),v_m_s:+g("v_m_s"),
+    rn_ids:getRns(),rock_type:g("rock_type"),porosity:+g("porosity"),
+    tortuosity:+g("tortuosity"),dispersivity_m:+g("dispersivity"),
+    char_len_m:+g("char_len"),Eh_mV:+g("Eh_mV"),pH:+g("pH"),
+    salinity_g_L:+g("salinity"),kd_scenario:kdScenario,
+    gas_fluid_id:g("gas_fluid"),S_w:+g("S_w"),theta_deg:+g("theta_deg"),
+  };
+  try{
+    const r=await fetch(BASE+"/api/multiphase",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(!r.ok){const e=await r.json();throw new Error(e.detail||JSON.stringify(e));}
+    const d=await r.json();
+    showErr("mp",null);
+    renderAdvTable("mp-out",d,true,+g("porosity"));
+  }catch(e){showErr("mp",e.message);console.error(e);}
+}
+
+// ── Single Phase Convection ───────────────────────────────
+async function runCV(){
+  const body={
+    T_C:+g("T_C"),P_MPa:+g("P_MPa"),dT_dz_C_m:+g("dT_dz"),
+    H_m:+g("H_m"),aperture_um:+g("aperture_um"),
+    salinity_g_L:+g("salinity"),rock_type:g("rock_type"),
+  };
+  try{
+    const r=await fetch(BASE+"/api/thermal-convection",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(!r.ok){const e=await r.json();throw new Error(e.detail||JSON.stringify(e));}
+    const d=await r.json();
+    showErr("cv",null);
+    renderConv("cv-out",d);
+  }catch(e){showErr("cv",e.message);console.error(e);}
+}
+
+// ── Transport Comparison (all 3 Kd scenarios) ────────────
+async function runTC(){
+  const rns=getRns();
+  if(!rns.length){showErr("tc","Select at least one radionuclide.");return;}
+  const base={
+    T_C:+g("T_C"),P_MPa:+g("P_MPa"),v_m_s:+g("v_m_s"),
+    rn_ids:rns,rock_type:g("rock_type"),porosity:+g("porosity"),
+    tortuosity:+g("tortuosity"),dispersivity_m:+g("dispersivity"),
+    char_len_m:+g("char_len"),Eh_mV:+g("Eh_mV"),pH:+g("pH"),
+    salinity_g_L:+g("salinity"),
+  };
+  try{
+    const res=await Promise.all(["low","mean","high"].map(sc=>{
+      return fetch(BASE+"/api/single-phase",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...base,kd_scenario:sc})})
+        .then(r=>r.json()).then(d=>({sc,d}));
+    }));
+    showErr("tc",null);
+    renderComparison("tc-out",rns,res);
+  }catch(e){showErr("tc",e.message);console.error(e);}
+}
+
+// ── Render advection results table ───────────────────────
+function renderAdvTable(targetId,data,isMP,phi){
+  const el=document.getElementById(targetId);
+  const nucs=Object.keys(data).filter(k=>k!=="fluid_props"&&k!=="system"&&k!=="warnings");
+  if(!nucs.length){el.innerHTML="<p>No results.</p>";return;}
+
+  const fp=data.fluid_props||{};
+  let fluidHtml=`<div class="hint" style="margin-bottom:10px">
+    <b>Fluid:</b> T=${fmt(fp.T_C??fp.T_C,4)}&#8202;&#176;C,
+    P=${fmt(fp.P_MPa,4)}&#8202;MPa,
+    &#961;=${fmt(fp.rho_kg_m3??fp.rho_water_kg_m3,5)}&#8202;kg/m&#179;,
+    &#956;=${fmtE(fp.mu_Pa_s??fp.mu_water_Pa_s)}&#8202;Pa&#183;s`;
+  if(isMP){
+    if(fp.phase)   fluidHtml+=`, phase: <b>${fp.phase}</b>`;
+    if(fp.rho_gas_kg_m3) fluidHtml+=`, &#961;<sub>gas</sub>=${fmt(fp.rho_gas_kg_m3,5)}&#8202;kg/m&#179;`;
+    if(fp.Sw_eff!=null)  fluidHtml+=`, S<sub>w,eff</sub>=${fmt(fp.Sw_eff,3)}`;
+    if(fp.co2_pH!=null)  fluidHtml+=`, CO&#8322;-pH&#8776;${fmt(fp.co2_pH,3)}`;
+  }
+  const sys=data.system||{};
+  if(sys.dispersivity_m!=null) fluidHtml+=`; &#945;<sub>L</sub>=${sys.dispersivity_m}&#8202;m`;
+  fluidHtml+=`</div>`;
+
+  const sc0=data[nucs[0]]?.retardation?.kd_scenario||kdScenario;
+  const gasCol=isMP?`<th>Gas frac.</th>`:"";
+
+  let rows="";
+  nucs.forEach(id=>{
+    const n=data[id];if(!n)return;
+    const pe=n.peclet||{};
+    const da=n.damkohler||{};
+    const ret=n.retardation||{};
+    const diff=n.diffusion||{};
+    const rhoB=ret.rho_b_kg_m3||0;
+
+    // Compute R for each scenario from returned Kd values
+    function rFromKd(kd_L_kg){
+      if(!kd_L_kg&&kd_L_kg!==0)return"–";
+      const Kd_m3=kd_L_kg/1000;
+      return fmt(1+(rhoB/phi)*Kd_m3,3);
+    }
+
+    const kdLow =ret.Kd_low_L_kg;
+    const kdMean=ret.Kd_mean_L_kg;
+    const kdHigh=ret.Kd_high_L_kg;
+
+    const gasCell=isMP?`<td style="font-size:.75rem">${n.gas_phase_frac!=null?fmtE(n.gas_phase_frac):"–"}</td>`:"";
+
+    rows+=`<tr>
+      <td><b>${n.label||id}</b><br><span style="color:#94a3b8;font-size:.68rem">${n.dominant_species||""}</span></td>
+      <td>${fmtE(diff.D_eff_m2_s)}</td>
+      <td>
+        <b>${fmt(ret.R,3)}</b> <span style="color:#94a3b8">(${sc0})</span><br>
+        <table class="sub-table">
+          <tr><td>Conservative</td><td>Kd=${fmtE(kdLow)} L/kg</td><td>R=${rFromKd(kdLow)}</td></tr>
+          <tr><td>Mean</td><td>Kd=${fmtE(kdMean)} L/kg</td><td>R=${rFromKd(kdMean)}</td></tr>
+          <tr><td>Generous</td><td>Kd=${fmtE(kdHigh)} L/kg</td><td>R=${rFromKd(kdHigh)}</td></tr>
+        </table>
+      </td>
+      <td>${fmtE(n.v_eff_m_s)}</td>
+      <td>${makePeBadge(pe.Pe_total??pe.Pe)}</td>
+      <td>${makeDaBadge(da.Da,da.halflife_yr,da.t_transport_yr)}</td>
+      ${gasCell}
+      <td style="font-size:.73rem">${n.speciation_note||"–"}</td>
+    </tr>`;
+  });
+
+  el.innerHTML=fluidHtml+`<div style="overflow-x:auto"><table>
+    <thead><tr>
+      <th>Nuclide</th>
+      <th>D<sub>eff</sub> (m&#178;/s)</th>
+      <th>Retardation R &amp; Kd <small style="font-weight:400">[active: <b>${sc0}</b>]</small></th>
+      <th>v<sub>eff</sub> (m/s)</th>
+      <th>P&#233;clet</th>
+      <th>Damk&#246;hler</th>
+      ${gasCol}
+      <th>Dominant species / notes</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>
+  <div class="hint" style="margin-top:8px">
+    D<sub>eff</sub> = D<sub>m</sub>&#183;&#966;&#183;S<sub>w</sub>/&#964; + &#945;<sub>L</sub>&#183;v (molecular + dispersive).
+    Pe = v&#183;L/D<sub>eff</sub>. &nbsp;
+    R = 1+(&#961;<sub>b</sub>/&#966;)&#183;K<sub>d</sub>; v<sub>eff</sub>=v/R. &nbsp;
+    Da = &#955;&#183;L/v<sub>eff</sub>; Da&#8810;1 migration concern, Da&#8811;1 decays in place.
+  </div>`;
+}
+
+function makePeBadge(Pe){
+  if(Pe==null||isNaN(Pe))return"–";
+  const v=fmtE(Pe);
+  if(Pe<0.1) return`<span class="badge badge-diff">Diffusion-dom.</span><br><small>Pe=${v}</small>`;
+  if(Pe<10)  return`<span class="badge badge-disp">Dispersive</span><br><small>Pe=${v}</small>`;
+  return`<span class="badge badge-adv">Advection-dom.</span><br><small>Pe=${v}</small>`;
+}
+
+function makeDaBadge(Da,t12yr,ttyr){
+  if(Da==null||isNaN(Da))return"–";
+  const v=fmtE(Da);
+  const extra=t12yr&&ttyr?`<br><small style="color:#64748b">t&#189;=${fmtE(t12yr)}yr, t<sub>trans</sub>=${fmtE(ttyr)}yr</small>`:"";
+  if(Da<0.01) return`<span class="badge badge-bad">Migration concern</span><br><small>Da=${v} &#8810;1</small>${extra}`;
+  if(Da<1)    return`<span class="badge badge-warn">Partial decay</span><br><small>Da=${v}</small>${extra}`;
+  return`<span class="badge badge-ok">Decays in place</span><br><small>Da=${v} &#8811;1</small>${extra}`;
+}
+
+// ── Render convection results ─────────────────────────────
+function renderConv(targetId,d){
+  const el=document.getElementById(targetId);
+  const cls=d.status==="Convection active"?"status-conv":d.status&&d.status.includes("marginal")?"status-onset":"status-sub";
+
+  let decayRows="";
+  (d.decay_heat_ref||[]).forEach(row=>{
+    const hi=row.dT_dz_C_m>=d.input_dT_dz_C_m*0.8&&row.dT_dz_C_m<=d.input_dT_dz_C_m*1.3?" style='background:#fef9c3'":"";
+    decayRows+=`<tr${hi}><td>${row.scenario}</td><td>${row.dT_dz_C_m}</td><td>${row.description}</td></tr>`;
+  });
+
+  el.innerHTML=`<div class="conv-grid">
+    <div class="conv-card">
+      <h3>Rayleigh-Darcy Analysis</h3>
+      <div class="kv"><span>Ra<sub>D</sub> (rock diffusivity basis)</span><span>${fmt(d.Ra_D,4)}</span></div>
+      <div class="kv"><span>Ra<sub>fluid</sub> (fluid diffusivity basis)</span><span>${fmt(d.Ra_fluid,4)}</span></div>
+      <div class="kv"><span>Critical Ra<sub>c</sub> = 4&pi;&sup2;</span><span>${fmt(d.Ra_c,4)}</span></div>
+      <div class="kv"><span>Ra / Ra<sub>c</sub></span><span>${fmt(d.Ra_ratio,4)}</span></div>
+      <div class="kv"><span>Nusselt number Nu</span><span>${fmt(d.Nu,3)}</span></div>
+      <div style="margin-top:12px;text-align:center">
+        <span class="status-badge ${cls}">${d.status||"–"}</span>
+      </div>
+    </div>
+
+    <div class="conv-card">
+      <h3>Buoyancy-Driven Velocity &amp; Properties</h3>
+      <div class="kv"><span>v<sub>buoy</sub></span><span>${fmtE(d.v_buoy_m_s)} m/s</span></div>
+      <div class="kv"><span>v<sub>buoy</sub></span><span>${fmt(d.v_buoy_m_yr,4)} m/yr</span></div>
+      <div class="kv"><span>Fracture aperture b</span><span>${d.aperture_m!=null?fmt(d.aperture_m*1e6,4):"–"} &mu;m</span></div>
+      <div class="kv"><span>k<sub>fracture</sub></span><span>${fmtE(d.k_fracture_m2)} m&sup2;</span></div>
+      <div class="kv"><span>&alpha;<sub>rock</sub></span><span>${fmtE(d.alpha_rock_m2_s)} m&sup2;/s</span></div>
+      <div class="kv"><span>&beta;<sub>T</sub> (fluid)</span><span>${fmtE(d.beta_T_1_K)} K&sup2;</span></div>
+      <div class="kv"><span>&rho;<sub>fluid</sub></span><span>${fmt(d.rho_fluid_kg_m3,5)} kg/m&sup3;</span></div>
+      <div class="kv"><span>&mu;<sub>fluid</sub></span><span>${fmtE(d.mu_fluid_Pa_s)} Pa&middot;s</span></div>
+      <div class="kv"><span>&lambda;<sub>rock</sub></span><span>${fmt(d.lambda_rock_W_mK,3)} W/m&middot;K</span></div>
+    </div>
+
+    <div class="conv-card" style="grid-column:1/-1">
+      <h3>Nuclear Decay Thermal Gradient Reference</h3>
+      <p style="font-size:.74rem;color:#64748b;margin-bottom:8px">
+        Typical near-field dT/dz values for nuclear waste repositories (SKB TR-10-40, Nagra NTB-02-05, NRC NUREG/CR-7171).
+        Your input dT/dz = <b>${fmt(d.input_dT_dz_C_m,4)}&thinsp;&deg;C/m</b>.
+      </p>
+      <table class="decay-table">
+        <thead><tr><th>Scenario</th><th>dT/dz (&deg;C/m)</th><th>Description</th></tr></thead>
+        <tbody>${decayRows}</tbody>
+      </table>
+    </div>
+  </div>
+  <div class="hint" style="margin-top:10px">
+    Ra<sub>D</sub> = k<sub>f</sub>&middot;&rho;<sub>f</sub>&middot;g&middot;&beta;<sub>T</sub>&middot;(dT/dz)&middot;H / (&mu;<sub>f</sub>&middot;&alpha;<sub>rock</sub>).
+    &nbsp;k<sub>f</sub> = b&sup2;/12 (parallel-plate).
+    &nbsp;&alpha;<sub>rock</sub> = &lambda;<sub>rock</sub>/(&rho;c<sub>p</sub>)<sub>rock</sub>.
+    &nbsp;Ra<sub>c</sub> = 4&pi;&sup2; &asymp; 39.5 (Horton-Rogers-Lapwood onset criterion).
+    &nbsp;Nu = 1 if Ra &le; Ra<sub>c</sub>, else (Ra/Ra<sub>c</sub>)<sup>0.5</sup>.
+  </div>`;
+}
+
+// ── Render transport comparison chart ────────────────────
+function renderComparison(targetId,rns,results){
+  const el=document.getElementById(targetId);
+  const labels=rns.map(id=>meta.radionuclides[id]?.label||id);
+  const palette={low:"#dc2626",mean:"#2563eb",high:"#16a34a"};
+  const names={low:"Conservative Kd",mean:"Mean Kd",high:"Generous Kd"};
+
+  const datasets=["low","mean","high"].map(sc=>{
+    const res=results.find(r=>r.sc===sc)?.d||{};
+    const vals=rns.map(id=>{
+      const v=res[id]?.v_eff_m_s;
+      return (v!=null&&v>0)?v:null;
+    });
+    return{
+      label:names[sc],
+      data:vals,
+      backgroundColor:palette[sc]+"88",
+      borderColor:palette[sc],
+      borderWidth:1,
+    };
+  });
+
+  el.innerHTML=`<h3 style="margin-bottom:10px;font-size:.9rem">Effective velocity v<sub>eff</sub> (m/s) by Kd scenario &mdash; single-phase advection</h3>
+  <canvas id="compChart" style="max-height:400px"></canvas>
+  <p class="chart-note">
+    v<sub>eff</sub> = v/R; R = 1+(&#961;<sub>b</sub>/&#966;)&middot;K<sub>d</sub>. &nbsp;
+    Log scale. &nbsp;
+    <span style="color:#dc2626">&#9632;</span> Conservative (low K<sub>d</sub>, fastest migration) &nbsp;
+    <span style="color:#2563eb">&#9632;</span> Mean &nbsp;
+    <span style="color:#16a34a">&#9632;</span> Generous (high K<sub>d</sub>, most retarded).
+  </p>`;
+
+  if(compChart){compChart.destroy();compChart=null;}
+  const ctx=document.getElementById("compChart").getContext("2d");
+  compChart=new Chart(ctx,{
+    type:"bar",
+    data:{labels,datasets},
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:"top"},
+        tooltip:{callbacks:{label:c=>c.parsed.y!=null?`${c.dataset.label}: ${c.parsed.y.toExponential(2)} m/s`:"N/A"}}
+      },
+      scales:{
+        y:{
+          type:"logarithmic",
+          title:{display:true,text:"v_eff (m/s)"},
+          ticks:{callback:v=>{
+            const e=Math.round(Math.log10(v));
+            return Math.abs(v-Math.pow(10,e))/v<0.01?`10^${e}`:null;
+          }}
+        },
+        x:{title:{display:true,text:"Radionuclide"}}
+      }
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>

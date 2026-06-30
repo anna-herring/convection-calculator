@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+iapws
+scipy
+numpy
+pydantic

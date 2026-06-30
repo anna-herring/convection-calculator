@@ -1,0 +1,331 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geo Transport Calculator</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  :root{--bg:#f5f6fa;--panel:#fff;--border:#dde1ea;--accent:#2c5f8a;--accent2:#3a7ebf;--text:#1e2530;--muted:#6b7280;--radius:8px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{background:var(--accent);color:#fff;padding:14px 24px;display:flex;align-items:baseline;gap:12px;}
+  header h1{font-size:1.15rem;font-weight:600;letter-spacing:.02em;}
+  header span{font-size:.82rem;opacity:.75;}
+  .layout{display:flex;height:calc(100vh - 52px);}
+  aside{width:288px;min-width:240px;background:var(--panel);border-right:1px solid var(--border);
+        padding:20px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;}
+  .section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;}
+  label.field{display:flex;flex-direction:column;gap:4px;font-size:.82rem;}
+  label.field .hint{color:var(--muted);font-size:.73rem;line-height:1.3;}
+  label.field .val{font-weight:600;font-size:.8rem;color:var(--accent);}
+  input[type=number],input[type=range]{width:100%;padding:6px 8px;border:1px solid var(--border);
+    border-radius:5px;font-size:.85rem;background:var(--bg);color:var(--text);}
+  input[type=number]:focus{outline:2px solid var(--accent2);border-color:transparent;}
+  .solute-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .solute-btn{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1.5px solid var(--border);
+    border-radius:6px;cursor:pointer;font-size:.82rem;background:var(--bg);
+    transition:background .12s,border-color .12s;user-select:none;}
+  .solute-btn.active{background:#e8f0f8;border-color:var(--accent2);font-weight:600;}
+  .solute-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .mode-toggle{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+  .mode-toggle button{flex:1;padding:7px 4px;border:none;background:var(--bg);cursor:pointer;
+    font-size:.78rem;color:var(--muted);transition:background .1s;line-height:1.2;}
+  .mode-toggle button.active{background:var(--accent);color:#fff;font-weight:600;}
+  .ctrl-group{display:flex;flex-direction:column;gap:10px;}
+  .hidden{display:none!important;}
+  button#calc-btn{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;
+    border-radius:var(--radius);font-size:.9rem;font-weight:600;cursor:pointer;transition:background .15s;margin-top:2px;}
+  button#calc-btn:hover{background:var(--accent2);}
+  button#calc-btn:disabled{background:#9ca3af;cursor:not-allowed;}
+  #status{font-size:.75rem;color:var(--muted);text-align:center;min-height:16px;}
+  #error-msg{font-size:.75rem;color:#dc2626;min-height:14px;}
+  main{flex:1;overflow-y:auto;padding:16px;display:grid;
+       grid-template-columns:1fr 1fr 1fr;gap:14px;align-content:start;}
+  .chart-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:10px 10px 6px;display:flex;flex-direction:column;}
+  .chart-title{font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:6px;}
+  .chart-div{flex:1;min-height:220px;}
+  .chart-card.wide{grid-column:1/-1;}
+  @media(max-width:900px){main{grid-template-columns:1fr 1fr;}}
+  @media(max-width:600px){.layout{flex-direction:column;}
+    aside{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--border);}
+    main{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Geo Transport Calculator</h1>
+  <span>Transport parameters for dissolved gases in aqueous solution</span>
+</header>
+<div class="layout">
+  <aside>
+    <div>
+      <div class="section-title">Solutes</div>
+      <div class="solute-grid" id="solute-grid"></div>
+    </div>
+
+    <div>
+      <div class="section-title">Mode</div>
+      <div class="mode-toggle">
+        <button class="active" id="btn-pressure"  onclick="setMode('pressure')">vs Pressure</button>
+        <button              id="btn-temperature" onclick="setMode('temperature')">vs Temp.</button>
+        <button              id="btn-depth"       onclick="setMode('depth')">vs Depth</button>
+      </div>
+    </div>
+
+    <!-- shared: brine density always visible -->
+    <div>
+      <div class="section-title">Conditions</div>
+      <div class="ctrl-group">
+
+        <!-- pressure mode controls -->
+        <div id="ctrl-pressure" class="ctrl-group">
+          <label class="field">
+            Nominal temperature
+            <span class="val" id="v-T_C">20 &deg;C</span>
+            <input type="range" id="T_C" min="-5" max="200" value="20" step="1"
+                   oninput="sv('v-T_C',this.value,'°C')">
+            <span class="hint">Temperature held constant across all pressures</span>
+          </label>
+          <label class="field">
+            Max pressure
+            <span class="val" id="v-P_max">20 MPa</span>
+            <input type="range" id="P_max" min="1" max="60" value="20" step="1"
+                   oninput="sv('v-P_max',this.value,'MPa')">
+          </label>
+        </div>
+
+        <!-- temperature mode controls -->
+        <div id="ctrl-temperature" class="ctrl-group hidden">
+          <label class="field">
+            Min temperature
+            <span class="val" id="v-T_min">0 &deg;C</span>
+            <input type="range" id="T_min" min="-5" max="150" value="0" step="1"
+                   oninput="sv('v-T_min',this.value,'°C')">
+          </label>
+          <label class="field">
+            Max temperature
+            <span class="val" id="v-T_max">100 &deg;C</span>
+            <input type="range" id="T_max" min="10" max="400" value="100" step="1"
+                   oninput="sv('v-T_max',this.value,'°C')">
+          </label>
+          <label class="field">
+            Nominal pressure
+            <span class="val" id="v-P_nom">10 MPa</span>
+            <input type="range" id="P_nom" min="1" max="60" value="10" step="1"
+                   oninput="sv('v-P_nom',this.value,'MPa')">
+            <span class="hint">Pressure held constant across all temperatures</span>
+          </label>
+        </div>
+
+        <!-- depth mode controls -->
+        <div id="ctrl-depth" class="ctrl-group hidden">
+          <label class="field">
+            Surface temperature
+            <span class="val" id="v-T_surf">20 &deg;C</span>
+            <input type="range" id="T_surf" min="-5" max="100" value="20" step="1"
+                   oninput="sv('v-T_surf',this.value,'°C')">
+          </label>
+          <label class="field">
+            Geothermal gradient
+            <span class="val" id="v-T_grad">25 &deg;C/km</span>
+            <input type="range" id="T_grad" min="0" max="80" value="25" step="1"
+                   oninput="sv('v-T_grad',this.value,'°C/km')">
+          </label>
+          <label class="field">
+            Max pressure (depth proxy)
+            <span class="val" id="v-P_max_d">20 MPa</span>
+            <input type="range" id="P_max_d" min="1" max="60" value="20" step="1"
+                   oninput="sv('v-P_max_d',this.value,'MPa')">
+          </label>
+        </div>
+
+        <!-- always shown -->
+        <label class="field">
+          Brine density
+          <input type="number" id="rho_water" value="1050" min="990" max="1300" step="5">
+          <span class="hint">kg/m&sup3; &nbsp;(pure water &asymp; 1000, seawater &asymp; 1025, brine &asymp; 1050&ndash;1200)</span>
+        </label>
+
+      </div>
+    </div>
+
+    <div>
+      <button id="calc-btn" onclick="runCalc()">Calculate</button>
+      <div id="error-msg"></div>
+      <div id="status"></div>
+    </div>
+
+    <div style="font-size:.7rem;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:12px;">
+      <strong>EoS:</strong> Peng-Robinson (CO&#8322;, He, Kr, N&#8322;, Xe); truncated virial (H&#8322;).<br>
+      <strong>Gas props:</strong> CoolProp (density, viscosity).<br>
+      <strong>Partitioning:</strong> Henry + Krichevsky-Kasarnovsky.<br>
+      <strong>Diffusivity:</strong> Stokes-Einstein T/&eta; correction.
+    </div>
+  </aside>
+
+  <main id="charts">
+    <div class="chart-card">
+      <div class="chart-title">(a) Gas-phase density [kg/m&sup3;]</div>
+      <div class="chart-div" id="ch-density"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">(b) Fugacity coefficient &phi;</div>
+      <div class="chart-div" id="ch-phi"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">(c) Partition coefficient K = f/x &nbsp;[MPa]</div>
+      <div class="chart-div" id="ch-K"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">(d) Aqueous solubility x<sub>sat</sub> &nbsp;[mol/mol]</div>
+      <div class="chart-div" id="ch-xsat"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">(e) Gas-phase viscosity &nbsp;[&mu;Pa&middot;s]</div>
+      <div class="chart-div" id="ch-visc"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">(f) Aqueous diffusivity D &nbsp;[m&sup2;/s]</div>
+      <div class="chart-div" id="ch-diff"></div>
+    </div>
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div class="chart-card">
+      <div class="chart-title">(g) Effective buoyancy &Delta;m = V&#773;<sub>m</sub>&thinsp;&rho;<sub>w</sub> &minus; M<sub>g</sub> &nbsp;[kg/mol] &mdash; positive = dissolved gas is lighter than displaced water</div>
+      <div class="chart-div" style="min-height:220px;" id="ch-deltam"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">(h) Specific Rayleigh number Ra* = |&Delta;&rho;|&thinsp;g / (&mu;<sub>w</sub>&thinsp;D) &nbsp;[m<sup>&minus;1</sup>] &mdash; multiply by k&thinsp;H/&phi; for dimensionless Ra</div>
+      <div class="chart-div" id="ch-ra"></div>
+    </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let lastResult = null;
+let mode = 'pressure';
+const SOLUTE_META = {};
+
+// ── helpers ──
+function sv(id, val, unit) { document.getElementById(id).textContent = val + ' ' + unit; }
+function g(id) { return document.getElementById(id); }
+function gv(id) { return +g(id).value; }
+
+// ── mode toggle ──
+function setMode(m) {
+  mode = m;
+  ['pressure','temperature','depth'].forEach(x => {
+    g('btn-'+x).classList.toggle('active', x===m);
+    g('ctrl-'+x).classList.toggle('hidden', x!==m);
+  });
+}
+
+// ── solute buttons ──
+async function loadSolutes() {
+  const data = await (await fetch('/api/solutes')).json();
+  const grid = g('solute-grid');
+  const defaultOn = ['CO2','H2','He'];
+  for (const [id, meta] of Object.entries(data)) {
+    SOLUTE_META[id] = meta;
+    const btn = document.createElement('div');
+    btn.className = 'solute-btn' + (defaultOn.includes(id) ? ' active' : '');
+    btn.dataset.id = id;
+    btn.innerHTML = `<span class="solute-dot" style="background:${meta.color}"></span>${meta.label}`;
+    btn.onclick = () => btn.classList.toggle('active');
+    grid.appendChild(btn);
+  }
+}
+
+function selectedSolutes() {
+  return [...document.querySelectorAll('.solute-btn.active')].map(b => b.dataset.id);
+}
+
+// ── API call ──
+async function runCalc() {
+  const solutes = selectedSolutes();
+  if (!solutes.length) { showError('Select at least one solute.'); return; }
+  g('calc-btn').disabled = true; showStatus('Calculating…'); showError('');
+
+  const body = {
+    mode, solutes,
+    rho_water_kg_m3: gv('rho_water'),
+    T_C:             gv('T_C'),
+    P_max_MPa:       gv('P_max'),
+    T_min_C:         gv('T_min'),
+    T_max_C:         gv('T_max'),
+    P_nominal_MPa:   gv('P_nom'),
+    T_grad_C_km:     gv('T_grad'),
+    // depth mode uses its own P_max slider
+    ...(mode==='depth' ? {P_max_MPa: gv('P_max_d')} : {}),
+    ...(mode==='depth' ? {T_C: gv('T_surf')} : {}),
+  };
+
+  try {
+    const resp = await fetch('/api/calculate', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    });
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail||resp.statusText); }
+    lastResult = await resp.json();
+    renderCharts(lastResult);
+    showStatus('Done.');
+  } catch(e) { showError('Error: '+e.message); }
+  finally { g('calc-btn').disabled = false; }
+}
+
+// ── charts ──
+const BASE = {
+  margin:{t:10,b:50,l:58,r:10},
+  paper_bgcolor:'transparent', plot_bgcolor:'#fafbfd',
+  font:{family:"'Segoe UI',system-ui,sans-serif",size:11},
+  legend:{orientation:'v',x:1.01,y:1,font:{size:10}},
+  xaxis:{gridcolor:'#e5e7eb',linecolor:'#9ca3af'},
+  yaxis:{gridcolor:'#e5e7eb',linecolor:'#9ca3af'},
+};
+const CFG = {displayModeBar:false,responsive:true};
+
+function plotLine(divId, result, key, yLabel, opts={}) {
+  const traces = Object.entries(result.solutes).map(([,sol]) => ({
+    x: result.x_values, y: sol[key],
+    mode:'lines', name:sol.label,
+    line:{color:sol.color,width:2}, connectgaps:false,
+  }));
+  Plotly.react(divId, traces, {
+    ...BASE,
+    xaxis:{...BASE.xaxis, title:{text:result.x_label, font:{size:11}}},
+    yaxis:{...BASE.yaxis, title:{text:yLabel, font:{size:11}}, type:opts.log?'log':'linear'},
+  }, CFG);
+}
+
+function renderCharts(result) {
+  plotLine('ch-density', result, 'rho_gas_kg_m3',          'ρ_gas [kg/m³]',    {log:true});
+  plotLine('ch-phi',     result, 'fugacity_coef',           'φ');
+  plotLine('ch-K',       result, 'partition_coef_MPa',      'K [MPa]',          {log:true});
+  plotLine('ch-xsat',    result, 'solubility_mol_frac',     'x_sat [mol/mol]',  {log:true});
+  plotLine('ch-visc',    result, 'visc_gas_uPas',           'η_gas [μPa·s]');
+  plotLine('ch-diff',    result, 'diffusivity_m2s',         'D [m²/s]');
+  plotLine('ch-ra',      result, 'rayleigh_specific_per_m', 'Ra* [m⁻¹]',       {log:true});
+
+  const sids   = Object.keys(result.solutes);
+  const labels = sids.map(s => result.solutes[s].label);
+  const colors = sids.map(s => result.solutes[s].color);
+  const vals   = sids.map(s => result.solutes[s].delta_m_kg_mol);
+  Plotly.react('ch-deltam', [{
+    type:'bar', x:labels, y:vals, marker:{color:colors},
+    text:vals.map(v=>v.toExponential(2)), textposition:'outside',
+  }], {
+    ...BASE,
+    yaxis:{...BASE.yaxis, title:{text:'Δm [kg/mol]',font:{size:11}},
+      zeroline:true, zerolinecolor:'#374151', zerolinewidth:1.5},
+    margin:{...BASE.margin,b:40},
+  }, CFG);
+}
+
+function showStatus(m){g('status').textContent=m;}
+function showError(m){g('error-msg').textContent=m;}
+
+loadSolutes().then(()=>runCalc());
+</script>
+</body>
+</html>
