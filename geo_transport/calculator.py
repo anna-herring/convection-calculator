@@ -7,11 +7,11 @@ Mw_H2O = 0.018015
 
 SOLUTES = {
     "CO2":  {"coolprop":"CO2",      "Tc":304.2,  "Pc_atm":72.9,   "omega":0.228,   "Vmp":35.1,  "Mw":0.044,    "NIST_Hcp":0.035,     "H_dT":2400, "D_25":2.2e-9,   "eos":"PR",     "label":"CO2", "color":"#e74c3c"},
-    "H2":   {"coolprop":"Hydrogen", "Vmp":26.7,  "Mw":0.002,       "NIST_Hcp":0.000078,"H_dT":495,  "D_25":5.11e-9,  "eos":"virial",  "label":"H2",  "color":"#3498db"},
+    "H2":   {"coolprop":"Hydrogen", "Vmp":26.7,  "Mw":0.002,       "NIST_Hcp":7.8e-4,"H_dT":530,  "D_25":5.11e-9,  "eos":"virial",  "label":"H2",  "color":"#3498db"},
     "He":   {"coolprop":"Helium",   "Tc":5.2,    "Pc_atm":2.244,  "omega":-0.390,  "Vmp":18.0,  "Mw":0.004,    "NIST_Hcp":0.00037,   "H_dT":360,  "D_25":6.76e-9,  "eos":"PR",     "label":"He",  "color":"#27ae60"},
-    "Kr":   {"coolprop":"Krypton",  "Tc":209.4,  "Pc_atm":54.3,   "omega":0.0,     "Vmp":34.0,  "Mw":0.08380,  "NIST_Hcp":0.00025,   "H_dT":1900, "D_25":1.84e-9,  "eos":"PR",     "label":"Kr",  "color":"#8e44ad"},
+    "Kr":   {"coolprop":"Krypton",  "Tc":209.4,  "Pc_atm":54.3,   "omega":0.0,     "Vmp":34.0,  "Mw":0.08380,  "NIST_Hcp":2.5e-3,    "H_dT":1900, "D_25":1.84e-9,  "eos":"PR",     "label":"Kr",  "color":"#8e44ad"},
     "N2":   {"coolprop":"Nitrogen", "Tc":126.2,  "Pc_atm":33.53,  "omega":0.039,   "Vmp":34.05, "Mw":0.02802,  "NIST_Hcp":0.00060,   "H_dT":1300, "D_25":2.61e-9,  "eos":"PR",     "label":"N2",  "color":"#e67e22"},
-    "Xe":   {"coolprop":"Xenon",    "Tc":289.73, "Pc_atm":57.64,  "omega":0.0,     "Vmp":37.0,  "Mw":0.13129,  "NIST_Hcp":0.00043,   "H_dT":2300, "D_25":2.1e-9,   "eos":"PR",     "label":"Xe",  "color":"#00b4d8"},
+    "Xe":   {"coolprop":"Xenon",    "Tc":289.73, "Pc_atm":57.64,  "omega":0.0,     "Vmp":46.5,  "Mw":0.13129,  "NIST_Hcp":4.3e-3,    "H_dT":2300, "D_25":1.47e-9,  "eos":"PR",     "label":"Xe",  "color":"#00b4d8"},
 }
 
 def _pr_eos(T_K, P_atm, Tc, Pc_atm, omega):
