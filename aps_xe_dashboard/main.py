@@ -20,8 +20,8 @@ class Req(BaseModel):
     P_max_MPa: float = Field(20.0, ge=0.5, le=60.0)
     T_C: float = Field(40.0, ge=1.0, le=90.0)
     H_mm: float = Field(20.0, gt=0.0, le=500.0)
-    phi: float = Field(0.38, gt=0.0, lt=1.0)
-    k_D: float = Field(500.0, gt=0.0, le=5000.0)
+    phi: float = Field(0.35, gt=0.0, lt=1.0)
+    k_D: float = Field(45.0, gt=0.0, le=5000.0)
     E_keV: float = Field(35.0, ge=10.0, le=200.0)
 
 

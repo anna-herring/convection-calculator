@@ -278,7 +278,7 @@ def _clean(a):
 
 
 def calculate(P_min_MPa=1.0, P_max_MPa=20.0, T_C=40.0,
-              H_mm=20.0, phi=0.38, k_D=500.0,
+              H_mm=20.0, phi=0.35, k_D=45.0,
               E_keV=35.0, n=101):
     """Sweep pressure at constant T; return Ra and X-ray contrast series.
 
