@@ -1,0 +1,539 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APS Xe Dashboard &mdash; Equations &amp; References</title>
+<style>
+  :root{--bg:#f5f6fa;--panel:#fff;--border:#dde1ea;--accent:#2c5f8a;--accent2:#3a7ebf;
+        --text:#1e2530;--muted:#6b7280;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--radius:8px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.62;}
+  header{background:var(--accent);color:#fff;padding:13px 22px;display:flex;align-items:baseline;
+         gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:10;}
+  header h1{font-size:1.1rem;font-weight:600;}
+  header nav{margin-left:auto;display:flex;gap:14px;}
+  header nav a{color:#fff;text-decoration:none;font-size:.84rem;opacity:.85;
+               padding:3px 9px;border-radius:5px;}
+  header nav a:hover{opacity:1;background:rgba(255,255,255,.15);}
+  header nav a.cur{background:rgba(255,255,255,.22);opacity:1;font-weight:600;}
+  .wrap{max-width:960px;margin:0 auto;padding:24px 20px 60px;}
+  section{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+          padding:20px 24px;margin-bottom:18px;}
+  h2{font-size:1.02rem;color:var(--accent);margin-bottom:10px;padding-bottom:6px;
+     border-bottom:1px solid var(--border);}
+  h3{font-size:.87rem;margin:16px 0 6px;color:var(--text);}
+  p{font-size:.86rem;margin-bottom:9px;}
+  ul,ol{font-size:.86rem;margin:0 0 10px 22px;}
+  li{margin-bottom:4px;}
+  .eq{background:#f8fafc;border-left:3px solid var(--accent2);border-radius:4px;
+      padding:11px 15px;margin:10px 0;font-family:'Cambria Math',Cambria,Georgia,serif;
+      font-size:.98rem;overflow-x:auto;}
+  .eq .where{display:block;margin-top:7px;font-family:'Segoe UI',sans-serif;
+             font-size:.76rem;color:var(--muted);line-height:1.5;}
+  table{width:100%;border-collapse:collapse;font-size:.79rem;margin:10px 0;}
+  th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--border);vertical-align:top;}
+  th{background:#f1f5f9;font-weight:600;font-size:.74rem;text-transform:uppercase;
+     letter-spacing:.04em;color:var(--muted);}
+  code{background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:.82em;}
+  .tag{display:inline-block;padding:1px 7px;border-radius:9px;font-size:.7rem;font-weight:600;}
+  .t-ref{background:#dcfce7;color:#166534;}
+  .t-lit{background:#dbeafe;color:#1e40af;}
+  .t-est{background:#fef3c7;color:#92400e;}
+  .t-usr{background:#f3e8ff;color:#6b21a8;}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:11px 15px;
+        font-size:.8rem;color:#78350f;margin:11px 0;}
+  .warn{background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d;}
+  .refs{font-size:.8rem;}
+  .refs li{margin-bottom:8px;}
+  a{color:var(--accent2);}
+</style>
+</head>
+<body>
+<header>
+  <h1>Equations &amp; References</h1>
+  <nav><a href="/">&larr; Dashboard</a><a href="/saturation.html">Saturation</a><a href="/theory.html" class="cur">Equations</a></nav>
+</header>
+<div class="wrap">
+
+<section>
+  <h2>1. Scope and operating point</h2>
+  <p>Xenon dissolving into de-ionised water in a porous core, isothermal at ~40&nbsp;&deg;C,
+     1&ndash;20&nbsp;MPa (see the hydrate constraint in &sect;3 for why 40&nbsp;&deg;C). The dashboard estimates (i) the Rayleigh&ndash;Darcy number governing
+     convective onset and (ii) the X-ray attenuation of the Xe-saturated solution relative
+     to pure water.</p>
+  <div class="note"><strong>Xe is a dense supercritical fluid at these conditions.</strong>
+     T<sub>c</sub> = 289.733&nbsp;K = 16.58&nbsp;&deg;C and P<sub>c</sub> = 5.842&nbsp;MPa, so at
+     40&nbsp;&deg;C the reduced temperature is T<sub>r</sub> = 1.081 and the reduced pressure
+     spans P<sub>r</sub> = 0.17&ndash;3.42. The Xe phase is always supercritical (T &gt;
+     T<sub>c</sub> at any operating temperature here) and becomes a dense fluid across the
+     range (&rho; &asymp; 53&ndash;1972&nbsp;kg/m&sup3;), not an ideal gas. This is why a
+     reference-quality equation of state is used rather than a cubic one (&sect;2).</div>
+  <p><strong>Sign convention.</strong> Dissolved Xe makes water <em>denser</em>
+     (V&#773;<sub>m</sub> = 46.5&nbsp;cm&sup3;/mol carries M = 131.29&nbsp;g/mol), so the
+     saturated layer sinks and the instability propagates downward from the Xe/water interface.</p>
+</section>
+
+<section>
+  <h2>2. Gas-phase equation of state and fugacity</h2>
+  <p>Xe properties come from the Helmholtz-energy formulation of Lemmon &amp; Span (2006)
+     [<a href="#r1">1</a>] as implemented in CoolProp [<a href="#r2">2</a>]. The residual
+     Helmholtz energy &alpha;<sup>r</sup>(&tau;,&delta;) gives the compressibility and
+     fugacity coefficient directly:</p>
+  <div class="eq">
+     Z = 1 + &delta;&thinsp;(&part;&alpha;<sup>r</sup>/&part;&delta;)<sub>&tau;</sub><br><br>
+     ln&thinsp;&phi; = &alpha;<sup>r</sup> + (Z &minus; 1) &minus; ln&thinsp;Z
+     <span class="where">&delta; = &rho;/&rho;<sub>c</sub> reduced density,
+       &tau; = T<sub>c</sub>/T inverse reduced temperature,
+       &phi; fugacity coefficient, f = &phi;P fugacity.</span></div>
+
+  <h3>Why not Peng&ndash;Robinson?</h3>
+  <p>Peng&ndash;Robinson [<a href="#r3">3</a>] is retained only as a fallback if a state point
+     cannot be evaluated. Cubic EoS are least accurate near the critical point, and that is
+     not far off where this experiment sits. Measured against the reference EoS at
+     40&nbsp;&deg;C:</p>
+  <table>
+    <tr><th>P [MPa]</th><th>&phi; (PR)</th><th>&phi; (ref.)</th><th>error</th><th>&rho; error</th></tr>
+    <tr><td>2.0</td><td>0.8980</td><td>0.9113</td><td>&minus;1.5 %</td><td>+1.6 %</td></tr>
+    <tr><td>5.0</td><td>0.7559</td><td>0.7814</td><td>&minus;3.3 %</td><td>+3.8 %</td></tr>
+    <tr><td>8.0</td><td>0.6229</td><td>0.6510</td><td>&minus;4.3 %</td><td>+1.9 %</td></tr>
+    <tr><td>20.0</td><td>0.3622</td><td>0.3779</td><td>&minus;4.2 %</td><td>+3.8 %</td></tr>
+  </table>
+  <p>Because x<sub>sat</sub> &prop; &phi; (&sect;3), that 1.5&ndash;4.3&nbsp;% bias propagates
+     linearly into &Delta;&rho;, Ra and the X-ray contrast. When this switch was made (then at
+     20&nbsp;&deg;C / 10&nbsp;MPa) it raised both Ra and x<sub>sat</sub> by 3.4&nbsp;%.</p>
+</section>
+
+<section>
+  <h2>3. Aqueous solubility</h2>
+  <p>Henry's law with the Krichevsky&ndash;Kasarnovsky pressure correction
+     [<a href="#r4">4</a>], driven by the fugacity from &sect;2:</p>
+  <div class="eq">
+     x<sub>sat</sub> = f<sub>Xe</sub>(P,T) / K(P,T)<br><br>
+     K(P,T) = H(T) &middot; exp[ V&#773;<sub>m</sub>&thinsp;(P &minus; P<sub>v</sub>) / RT ]<br><br>
+     H(T) = H<sub>298</sub> / exp[ &minus;&Delta;<sub>soln</sub>H/R &middot;
+            (1/T &minus; 1/298.15) ]
+     <span class="where">x<sub>sat</sub> mole fraction Xe at saturation;
+       H Henry constant [MPa]; V&#773;<sub>m</sub> partial molar volume of dissolved Xe;
+       P<sub>v</sub> water vapour pressure; &Delta;<sub>soln</sub>H/R = 2300&nbsp;K
+       (van&rsquo;t Hoff temperature coefficient &mdash; verified; Fern&aacute;ndez-Prini et al.
+       2003 [<a href="#r20">20</a>] gives 2200&nbsp;K, published range 2200&ndash;2500&nbsp;K,
+       which spans 4.7&nbsp;% in x<sub>sat</sub> at 40&nbsp;&deg;C, 1.7&nbsp;% at 20&nbsp;&deg;C
+       &mdash; the spread grows with distance from the 298.15&nbsp;K reference).</span></div>
+  <p>H<sub>298</sub> is converted from the Henry solubility constant
+     H<sup>cp</sup> = 4.3&times;10<sup>&minus;5</sup>&nbsp;mol/(m&sup3;&middot;Pa) at
+     298.15&nbsp;K &mdash; the value recommended by Abraham &amp; Matteoli (1988)
+     [<a href="#r18">18</a>] and Clever (1979b) [<a href="#r19">19</a>], as compiled by
+     Sander (2015) [<a href="#r5">5</a>]. Converting to the mol/(kg&middot;bar) form used
+     internally is a factor of <strong>100</strong>, since
+     55510&nbsp;mol/m&sup3; &times; 0.018015&nbsp;kg/mol = 1000.
+     <strong>An earlier version applied &times;10</strong>, making Xe solubility &mdash; and
+     hence &Delta;&rho;, Ra and the X-ray contrast &mdash; a factor of 10 too low. The same
+     slip affected Kr and H&#8322; in the sibling tool. <code>validate_solubility()</code>
+     now checks the model against Sander&rsquo;s value in its <em>native</em> units, so the
+     conversion itself is covered by the test.</p>
+  <p><strong>The Henry constant actually evaluated is Eq. (15) of Rasoolzadeh et al.</strong>
+     [<a href="#r22">22</a>], a published correlation rather than a two-parameter fit:</p>
+  <div class="eq">
+     ln(H<sub>Xe,water</sub>/bar) = 39.273&thinsp;z &minus; 36.855&thinsp;z&sup2;
+       + ln(1.01325),&nbsp;&nbsp; z = 1 &minus; 188.78/T
+     <span class="where">Valid across the full temperature range of the hydrate data. It agrees
+       with the compiled H<sup>cp</sup> above to 1.9&nbsp;% at 25&nbsp;&deg;C &mdash; an
+       independent cross-check on the corrected constant. The van&rsquo;t Hoff form drifts
+       ~10&nbsp;% by 5&nbsp;&deg;C and ~5&nbsp;% by 40&nbsp;&deg;C, so it is retained only for
+       comparison (<code>_henry_MPa_vanthoff</code>).</span></div>
+  <h3>Clathrate hydrate: the limit of validity</h3>
+  <p>Xenon forms an sI clathrate hydrate (Xe&middot;5.90H<sub>2</sub>O). Above the three-phase
+     equilibrium pressure a solid hydrate is thermodynamically stable and the dissolution
+     model here does <em>not</em> describe the system &mdash; there is a third phase.
+     Fitting a Henry/Krichevsky&ndash;Kasarnovsky form to high-pressure solubility data taken
+     inside the hydrate field pushes the apparent V&#773;<sub>m</sub> to unphysical values
+     (~125&nbsp;cm&sup3;/mol against a true ~42&ndash;52&nbsp;cm&sup3;/mol), because the fitted
+     parameter absorbs the hydrate contribution. Rasoolzadeh et al. use
+     v<sub>Xe</sub><sup>&infin;</sup> = 46&nbsp;cm&sup3;/mol in the same
+     Krichevsky&ndash;Kasarnovsky framework, independently supporting the 46.5 used here, and
+     note that it may be treated as pressure-independent below the solvent critical
+     temperature.</p>
+  <p>The boundary is taken from the <strong>measured</strong> L<sub>w</sub>&ndash;H&ndash;V
+     three-phase data of Rasoolzadeh et al. (2020) [<a href="#r22">22</a>] &mdash; all 87 points
+     of their Table 4, covering 273.15&ndash;343.75&nbsp;K and 0.153&ndash;376&nbsp;MPa
+     (tensimeter, Cailletet apparatus and high-pressure autoclave; u(T) 0.01&ndash;0.02&nbsp;K,
+     u(P) 0.025&nbsp;kPa&ndash;0.05&nbsp;MPa). The code interpolates
+     ln&thinsp;P<sub>hyd</sub> linearly in T between these points; earlier data of
+     Makogon et al. [<a href="#r21">21</a>] are consistent over their narrower range.</p>
+  <table>
+    <tr><th>T [&deg;C]</th><th>5</th><th>10</th><th>15</th><th>20</th><th>25</th><th>30</th><th>35</th><th>40</th><th>45</th></tr>
+    <tr><td>P<sub>hyd</sub> [MPa]</td><td>0.25</td><td>0.42</td><td>0.72</td><td><strong>1.17</strong></td><td>1.96</td><td>3.38</td><td>6.37</td><td>21.9</td><td>53.5</td></tr>
+  </table>
+  <div class="note warn"><strong>At 20&nbsp;&deg;C the boundary is only ~1.17&nbsp;MPa.</strong>
+     Lowering pressure is therefore a weak lever &mdash; a 1&ndash;5&nbsp;MPa span at
+     20&nbsp;&deg;C is ~95&nbsp;% inside the hydrate field, which is why the default operating
+     point is 40&nbsp;&deg;C rather than 20&nbsp;&deg;C. <strong>Temperature is the
+     effective control</strong>, and the window opens very steeply: 3.4&nbsp;MPa at
+     30&nbsp;&deg;C, 6.4&nbsp;MPa at 35&nbsp;&deg;C, but <strong>21.9&nbsp;MPa at
+     40&nbsp;&deg;C</strong>. The curve has a pronounced knee near 310&nbsp;K where the
+     Xe-rich phase becomes dense, so no single Clausius&ndash;Clapeyron fit represents it
+     &mdash; a two-point fit used here previously was 57&nbsp;% low at 40&nbsp;&deg;C. The
+     dashboard shades the stable region on every panel and reports the fraction of the swept
+     range inside it.</div>
+
+  <p><strong>V&#773;<sub>m</sub> enters twice, in the same direction.</strong> It raises the
+     solution molar volume (lowering &Delta;&rho;, &sect;4) <em>and</em> it sits in the
+     Krichevsky&ndash;Kasarnovsky exponent (lowering x<sub>sat</sub>). The two effects
+     compound rather than cancel.</p>
+</section>
+
+<section>
+  <h2>4. Solution density and buoyancy</h2>
+  <p>Ideal molar-volume mixing between water and the partial molar volume of dissolved Xe:</p>
+  <div class="eq">
+     M<sub>mix</sub> = x&thinsp;M<sub>Xe</sub> + (1&minus;x)&thinsp;M<sub>H2O</sub><br>
+     V<sub>mix</sub> = x&thinsp;V&#773;<sub>m</sub> + (1&minus;x)&thinsp;M<sub>H2O</sub>/&rho;<sub>w</sub><br><br>
+     &rho;<sub>sat</sub> = M<sub>mix</sub> / V<sub>mix</sub>
+     &nbsp;&nbsp;&nbsp; &Delta;&rho; = &rho;<sub>sat</sub> &minus; &rho;<sub>w</sub>
+     <span class="where">&rho;<sub>w</sub> DI-water density from IAPWS-95
+       [<a href="#r6">6</a>] at the local T, P. Mass fraction of Xe
+       w<sub>Xe</sub> = x&thinsp;M<sub>Xe</sub>/M<sub>mix</sub>, and dissolved concentration
+       C<sub>Xe</sub> = w<sub>Xe</sub>&thinsp;&rho;<sub>sat</sub>.</span></div>
+  <p>At 8&nbsp;MPa and 40&nbsp;&deg;C, x<sub>sat</sub> = 2.51&times;10<sup>&minus;3</sup>
+     gives C<sub>Xe</sub> = 18.2&nbsp;g/L (&equiv; kg/m&sup3;, 138&nbsp;mM) and
+     &Delta;&rho; = 11.8&nbsp;kg/m&sup3;
+     &mdash; comparable to CO<sub>2</sub>/brine systems, so the buoyancy forcing is
+     substantial rather than marginal. Ra remains far more sensitive to k and H than to
+     pressure, because x<sub>sat</sub> is close to saturated in P.</p>
+</section>
+
+<section>
+  <h2>5. Water properties and diffusivity</h2>
+  <p>Density from IAPWS-95 [<a href="#r6">6</a>] and viscosity from the IAPWS 2008 formulation
+     [<a href="#r7">7</a>], both evaluated at the <em>local</em> T and P (not 1&nbsp;atm &mdash;
+     that distinction caused a spurious discontinuity in an earlier version when the
+     saturation line was crossed).</p>
+  <p>Aqueous Xe diffusivity is scaled from 25&nbsp;&deg;C by the Stokes&ndash;Einstein
+     relation, in which D&thinsp;&eta;/T is invariant:</p>
+  <div class="eq">
+     D(T) = D<sub>25</sub> &middot; (T / 298.15) &middot;
+            (&eta;<sub>w</sub>(298.15) / &eta;<sub>w</sub>(T))
+     <span class="where">D<sub>25</sub> aqueous diffusivity at 25&nbsp;&deg;C;
+       &eta;<sub>w</sub> water viscosity.</span></div>
+  <p>D<sub>25</sub> = 1.47&times;10<sup>&minus;9</sup>&nbsp;m&sup2;/s for Xe in water, from the
+     sparingly-soluble-gas measurements of Jähne, Heinz &amp; Dietrich (1987)
+     [<a href="#r8">8</a>]. This sits correctly in the noble-gas series &mdash; diffusivity
+     decreases monotonically with atomic size, so Xe must fall below Kr
+     (1.84&times;10<sup>&minus;9</sup>).</p>
+  <div class="note"><strong>Ra is inversely proportional to D</strong>, so this is one of the
+     most leveraged inputs in the model &mdash; more so than pressure across the whole
+     1&ndash;20&nbsp;MPa range. For reference, the sensitivity (ROBU0 at 8&nbsp;MPa,
+     40&nbsp;&deg;C):
+     <table>
+       <tr><th>D<sub>25</sub> [m&sup2;/s]</th><th>Ra</th><th>Ra/Ra<sub>c</sub></th><th>t<sub>diff</sub></th></tr>
+       <tr><td>1.47&times;10<sup>&minus;9</sup> <em>(in use)</em></td><td>2180</td><td>55</td><td>2.20 d</td></tr>
+       <tr><td>1.84&times;10<sup>&minus;9</sup></td><td>1742</td><td>44</td><td>1.76 d</td></tr>
+       <tr><td>2.10&times;10<sup>&minus;9</sup></td><td>1526</td><td>39</td><td>1.54 d</td></tr>
+     </table></div>
+</section>
+
+<section>
+  <h2>6. Convective onset: Rayleigh&ndash;Darcy number</h2>
+  <div class="eq">
+     Ra = &Delta;&rho;&thinsp;g&thinsp;k&thinsp;H / (&mu;<sub>w</sub>&thinsp;&phi;&thinsp;D)
+     <span class="where">k permeability [m&sup2;]; H core height [m]; &phi; porosity;
+       g = 9.81&nbsp;m/s&sup2;.</span></div>
+  <p>Compared against the classical linear-stability threshold for a saturated porous layer,
+     Horton &amp; Rogers (1945) [<a href="#r9">9</a>] and Lapwood (1948) [<a href="#r10">10</a>]:</p>
+  <div class="eq">Ra<sub>c</sub> = 4&pi;&sup2; &asymp; 39.5</div>
+  <p>The dashboard labels Ra&nbsp;&gt;&nbsp;4Ra<sub>c</sub> &ldquo;vigorous convection&rdquo;,
+     Ra&nbsp;&gt;&nbsp;Ra<sub>c</sub> &ldquo;convective&rdquo;,
+     Ra&nbsp;&gt;&nbsp;0.5Ra<sub>c</sub> &ldquo;marginal&rdquo;, else diffusion-dominated.
+     Inverting Ra = Ra<sub>c</sub> gives the core height at which a sample first convects,
+     since Ra &prop; H.</p>
+</section>
+
+<section>
+  <h2>7. Velocity, length and time scales</h2>
+  <div class="eq">
+     u<sub>D</sub> = k&thinsp;&Delta;&rho;&thinsp;g / &mu;<sub>w</sub>
+     &nbsp;&nbsp;(Darcy buoyancy flux) &nbsp;&nbsp;&nbsp;
+     u<sub>pore</sub> = u<sub>D</sub>/&phi;<br><br>
+     &#8467;* = &phi;D/u<sub>D</sub> &nbsp;&nbsp;&nbsp;
+     t* = &phi;&sup2;D/u<sub>D</sub>&sup2;<br><br>
+     t<sub>conv</sub> = H&phi;/u<sub>D</sub> = H/u<sub>pore</sub>
+     &nbsp;&nbsp;&nbsp; t<sub>diff</sub> = H&sup2;/D
+     <span class="where">Darcy velocity is a flux per unit <em>total</em> area; the fluid
+       itself moves faster by 1/&phi;, which is why t<sub>conv</sub> carries the &phi;.</span></div>
+  <p>The two timescales are not independent of Ra &mdash; their ratio <em>is</em> Ra:</p>
+  <div class="eq">
+     t<sub>diff</sub>/t<sub>conv</sub> = (H&sup2;/D)&thinsp;/&thinsp;(H&phi;/u<sub>D</sub>)
+     = H&thinsp;u<sub>D</sub>/(&phi;D) = Ra</div>
+  <p>verified numerically to within floating-point error. The timescale card therefore restates
+     panel (a) in clock time, which is the form needed to choose an acquisition cadence.</p>
+  <p>Onset of the instability is reported as ~10&sup2;&thinsp;t*, an order-of-magnitude scaling
+     consistent with the linear-stability and simulation results of Riaz et al. (2006)
+     [<a href="#r11">11</a>] and Slim (2014) [<a href="#r12">12</a>]. It is a scaling, not a
+     prediction; the &phi; bookkeeping in t* differs between sources.</p>
+</section>
+
+<section>
+  <h2>8. Permeability estimates (Kozeny&ndash;Carman)</h2>
+  <p>All permeabilities in the presets are nominal grade values or estimates, not measurements
+     on the specific cores. ROBU00 and ROBU0 have no quoted permeability and are extrapolated
+     by Kozeny&ndash;Carman [<a href="#r13">13</a>, <a href="#r14">14</a>]:</p>
+  <div class="eq">
+     k = C &middot; &phi;&sup3;&thinsp;d&sup2; / (1 &minus; &phi;)&sup2;
+     <span class="where">d geometric mean of the quoted pore-size range;
+       C a shape/tortuosity constant calibrated against a grade of known k.</span></div>
+  <p>Both are assigned ROBU1&rsquo;s porosity (0.38), so the porosity group cancels exactly and
+     KC reduces to k &prop; d&sup2;:</p>
+  <div class="eq">
+     k<sub>ROBU0</sub> = 200&nbsp;D &times; (200.0/126.5)&sup2; = 500&nbsp;D<br>
+     k<sub>ROBU00</sub> = 200&nbsp;D &times; (353.6/126.5)&sup2; = 1563&nbsp;D</div>
+  <p>Calibrating C on the known grades gives 0.0876 (ROBU1), 0.1109 (ROBU2), 0.1102 (ROBU3).
+     ROBU2 and ROBU3 agree to 0.6&nbsp;%, so the functional form describes the series well, but
+     ROBU1 sits ~21&nbsp;% below that trend. Anchoring on ROBU2/ROBU3 instead would scale both
+     extrapolations up by ~1.26&times;. Since Ra &prop; k, that is a direct 26&nbsp;%
+     uncertainty in Ra for these two grades.</p>
+</section>
+
+<section>
+  <h2>9. X-ray attenuation</h2>
+  <p>Beer&ndash;Lambert with the mass-attenuation mixture rule, on NIST XCOM /
+     Hubbell &amp; Seltzer tabulations [<a href="#r15">15</a>, <a href="#r16">16</a>]
+     interpolated log&ndash;log in energy:</p>
+  <div class="eq">
+     &mu;<sub>w</sub> = &rho;<sub>w</sub>&thinsp;(&mu;/&rho;)<sub>H2O</sub><br>
+     &mu;<sub>sat</sub> = &rho;<sub>sat</sub>&thinsp;[ w<sub>Xe</sub>(&mu;/&rho;)<sub>Xe</sub>
+        + (1&minus;w<sub>Xe</sub>)(&mu;/&rho;)<sub>H2O</sub> ]<br><br>
+     I/I<sub>0</sub> = exp(&minus;&mu;L)
+     &nbsp;&nbsp;&nbsp; &lambda;<sub>1/e</sub> = 1/&mu;
+     <span class="where">&mu; linear attenuation coefficient [cm<sup>&minus;1</sup>];
+       w<sub>Xe</sub> mass fraction of dissolved Xe; L path length.</span></div>
+  <p>Panel (b) plots &mu;<sub>sat</sub>/&mu;<sub>w</sub>; panel (d) plots the equivalent
+     1/e length ratio, which is its exact reciprocal and is independent of path length:</p>
+  <div class="eq">
+     &lambda;<sub>sat</sub>/&lambda;<sub>w</sub> = &mu;<sub>w</sub>/&mu;<sub>sat</sub>
+     = (&mu;<sub>sat</sub>/&mu;<sub>w</sub>)<sup>&minus;1</sup></div>
+
+  <h3>The Xe K-edge dominates the energy choice</h3>
+  <p>Xe has a K absorption edge at <strong>34.5614&nbsp;keV</strong>, across which
+     (&mu;/&rho;)<sub>Xe</sub> jumps by a factor of <strong>5.4</strong>
+     (6.129 &rarr; 33.16&nbsp;cm&sup2;/g). Interpolation is performed separately below and above
+     the edge so it is never smoothed across. Operating just above the edge (~35&nbsp;keV)
+     rather than below it (30&nbsp;keV) changes &mu;<sub>sat</sub>/&mu;<sub>w</sub> from
+     1.43 to <strong>2.86</strong>, and the radiographic contrast from 3.0&nbsp;% to
+     11.0&nbsp;% (at 8&nbsp;MPa, 40&nbsp;&deg;C).</p>
+
+  <h3>What the matrix and porosity do</h3>
+  <p>For a difference measurement between Xe-free and Xe-saturated states in the same core, the
+     solid matrix term is identical in both and cancels exactly from the change in optical depth:</p>
+  <div class="eq">
+     &Delta;(&mu;L) = [(1&minus;&phi;)&mu;<sub>s</sub> + &phi;&mu;<sub>sat</sub>]L
+       &minus; [(1&minus;&phi;)&mu;<sub>s</sub> + &phi;&mu;<sub>w</sub>]L
+       = &phi;&thinsp;&Delta;&mu;<sub>fluid</sub>&thinsp;L</div>
+  <p>So the matrix sets the transmitted flux (and therefore the noise) but contributes nothing
+     to the contrast. Two different numbers apply depending on the measurement:</p>
+  <ul>
+    <li><strong>Projection radiography</strong> &mdash; path-integrated, contrast
+        = &phi;&thinsp;&Delta;&mu;&thinsp;L (&asymp;11&nbsp;% for a 5&nbsp;mm,
+        &phi;&nbsp;=&nbsp;0.38 core at 35&nbsp;keV, 8&nbsp;MPa, 40&nbsp;&deg;C).</li>
+    <li><strong>Pore-resolved tomography</strong> &mdash; a reconstructed pore voxel is entirely
+        fluid, so it swings the full &mu;<sub>sat</sub>/&mu;<sub>w</sub> &asymp; 2.9&times;
+        (panel b). Neither &phi; nor the matrix enters this contrast; they enter only through
+        reconstruction noise.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>10. Parameter provenance</h2>
+  <p>Not all inputs carry equal weight. Tags:
+     <span class="tag t-ref">reference EoS</span>
+     <span class="tag t-lit">literature</span>
+     <span class="tag t-est">estimated</span>
+     <span class="tag t-usr">user input</span></p>
+  <table>
+    <tr><th>Quantity</th><th>Value / source</th><th>Status</th></tr>
+    <tr><td>Xe &phi;, &rho;, Z</td><td>Lemmon &amp; Span (2006) via CoolProp</td><td><span class="tag t-ref">reference EoS</span></td></tr>
+    <tr><td>Water &rho;, &eta;</td><td>IAPWS-95 / IAPWS 2008 via CoolProp</td><td><span class="tag t-ref">reference EoS</span></td></tr>
+    <tr><td>(&mu;/&rho;) Xe, H&#8322;O</td><td>NIST SRD 126 grid points, verified against the published tables</td><td><span class="tag t-ref">reference data</span></td></tr>
+    <tr><td>H<sup>cp</sup> = 4.3&times;10<sup>&minus;5</sup> mol/(m&sup3;&middot;Pa)</td><td>Abraham &amp; Matteoli (1988); Clever (1979b), via Sander (2015); checked by <code>validate_solubility()</code></td><td><span class="tag t-lit">literature</span></td></tr>
+    <tr><td>&Delta;<sub>soln</sub>H/R = 2300 K</td><td>Abraham &amp; Matteoli (1988); Clever (1979b) &mdash; both give 2300 K; published range 2200&ndash;2500 K spans only 1.7&nbsp;% at 20 &deg;C</td><td><span class="tag t-lit">literature</span></td></tr>
+    <tr><td>V&#773;<sub>m</sub> = 46.5 cm&sup3;/mol</td><td>supplied; cf. Moore et al. (1982) [<a href="#r17">17</a>]. The ~125 cm&sup3;/mol apparent value from high-pressure data [<a href="#r23">23</a>] is a hydrate artefact &mdash; see &sect;3</td><td><span class="tag t-usr">user input</span></td></tr>
+    <tr><td>P<sub>hyd</sub> boundary</td><td>87 measured L<sub>w</sub>&ndash;H&ndash;V points, Rasoolzadeh et al. (2020) Table 4 [<a href="#r22">22</a>]</td><td><span class="tag t-ref">reference data</span></td></tr>
+    <tr><td>H(T) correlation</td><td>Eq. (15) of Rasoolzadeh et al. (2020) [<a href="#r22">22</a>]</td><td><span class="tag t-lit">literature</span></td></tr>
+    <tr><td>D<sub>25</sub> = 1.47&times;10<sup>&minus;9</sup> m&sup2;/s</td><td>Jähne et al. (1987) [<a href="#r8">8</a>]</td><td><span class="tag t-lit">literature</span></td></tr>
+    <tr><td>k, &phi; (all presets)</td><td>nominal grade values / KC extrapolation</td><td><span class="tag t-est">estimated</span></td></tr>
+    <tr><td>&mu;/&rho; borosilicate</td><td>SiO&#8322; proxy, 0.43 cm&sup2;/g &times; 2.23 g/cm&sup3;</td><td><span class="tag t-est">estimated</span></td></tr>
+    <tr><td>H, T, P, E</td><td>set in the sidebar</td><td><span class="tag t-usr">user input</span></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>11. Assumptions and limitations</h2>
+  <ol>
+    <li><strong>Tortuosity is neglected.</strong> Molecular D is used, not an effective
+        D<sub>eff</sub> = D/&tau;. Real media have &tau; &asymp; 1.5&ndash;3, so
+        t<sub>diff</sub> is a lower bound. Applied consistently in Ra and t<sub>diff</sub>,
+        so their ratio is unaffected.</li>
+    <li><strong>Ra<sub>c</sub> = 4&pi;&sup2; assumes the classical configuration</strong>
+        (saturated layer, impermeable base, fixed-concentration top). Check it against your
+        actual boundary conditions.</li>
+    <li><strong>Ideal molar-volume mixing</strong> and a concentration-independent
+        V&#773;<sub>m</sub> &mdash; defensible at x &asymp; 3&times;10<sup>&minus;4</sup>.</li>
+    <li><strong>t<sub>conv</sub> is a lower bound on transit</strong>: it assumes a parcel at
+        the full buoyancy velocity, the terminal speed of a developed finger. Early fingers
+        are slower.</li>
+    <li><strong>Onset and transit are separate.</strong> For ROBU0 onset is negligible against
+        transit; for ROBU2 the onset wait dominates entirely. Read both cards together.</li>
+    <li><strong>Equilibrium saturation.</strong> x<sub>sat</sub> is the equilibrium value; no
+        interfacial mass-transfer kinetics are modelled.</li>
+    <li><strong>Homogeneous, isotropic, isothermal.</strong> No heterogeneity, no dispersion,
+        no thermal coupling. Dissolution is exothermic (~19&nbsp;kJ/mol), enough for a
+        ~0.5&nbsp;K transient when a sub-mL pore volume saturates.</li>
+    <li><strong>The bulk Xe phase is assumed held in place.</strong> Xe is dense: above
+        ~6.2&nbsp;MPa at 20&nbsp;&deg;C (8.4&nbsp;MPa at 40&nbsp;&deg;C) the bulk Xe phase is
+        denser than water and would sink if free to migrate, which would put the Xe below the
+        water and make the arrangement gravitationally stable. A hydrophilic membrane retaining
+        the phase removes this concern, and the dissolved-phase buoyancy driving the instability
+        (&sect;4) is unaffected either way. The dashboard marks the crossover for reference only.</li>
+    <li><strong>Continuum (Darcy) description assumed valid.</strong> This is the weakest
+        assumption for the coarse grades. The finger scale
+        &#8467;* = &phi;D/u<sub>D</sub> falls well below one pore diameter for
+        ROBU00 (&#8467;*/d &asymp; 0.01), ROBU0 (0.05) and ROBU1 (0.18), so there is no valid
+        REV and Ra in the thousands should not be read as a quantitative instability margin.
+        Pore-scale P&eacute;clet numbers of 5&ndash;120 for the same grades mean mechanical
+        dispersion rather than molecular D controls mixing, which would lower the effective Ra.
+        ROBU2 (&#8467;*/d &asymp; 1.5, Pe &asymp; 0.7) is the grade where the theory is
+        self-consistent.</li>
+    <li><strong>Ra<sub>c</sub> is a steady-layer criterion.</strong> Dissolution-driven
+        convection is a transient boundary-layer problem; onset is governed by boundary-layer
+        growth (the t* scaling of &sect;7), not by the layer Ra. With Ra in the thousands the
+        layer criterion is trivially satisfied and carries little information. Lateral
+        confinement in a narrow core also raises the true threshold above 4&pi;&sup2;.</li>
+    <li><strong>Monochromatic beam assumed at the K-edge.</strong> The 5.4&times; edge jump
+        requires sitting cleanly above 34.5614&nbsp;keV; a bandwidth straddling the edge
+        dilutes the contrast advantage substantially.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>12. Xe saturation volume calculator</h2>
+  <p>The saturation calculator estimates the volume of Xe gas (at tank pressure and temperature)
+     required to reach 100% saturation of a given volume of water at target pore conditions.</p>
+
+  <h3>Physical basis</h3>
+  <p>At equilibrium, the dissolved Xe mole fraction in water is determined by Henry's law with
+     Krichevsky&ndash;Kasarnovsky pressure correction:</p>
+  <div class="eq">
+     x<sub>sat</sub> = f / K<sub>K</sub>(T,P)<br><br>
+     K<sub>K</sub>(T,P) = H(T) exp( V&#773;<sub>m</sub>(P &minus; P<sup>sat</sup>_w) / RT )
+     <span class="where">x<sub>sat</sub> mole fraction of dissolved Xe,
+       f fugacity of Xe in the tank (Pa),
+       H(T) Henry's constant (Pa·m³/mol),
+       V&#773;<sub>m</sub> partial molar volume (46.5 cm³/mol),
+       P<sup>sat</sup><sub>w</sub> water vapour pressure.</span></div>
+
+  <h3>Solver procedure</h3>
+  <ol>
+    <li><strong>Compute tank Xe fugacity:</strong> Use the residual-Helmholtz EoS (Lemmon &amp; Span 2006)
+        to find the fugacity coefficient &phi;(P<sub>tank</sub>, T<sub>tank</sub>), then
+        f = &phi; × P<sub>tank</sub>.</li>
+    <li><strong>Compute pore partition coefficient:</strong> Evaluate K<sub>K</sub> at the target pore
+        conditions (P<sub>pore</sub>, T<sub>pore</sub>).</li>
+    <li><strong>Compute saturation mole fraction:</strong> x<sub>sat</sub> = f / K<sub>K</sub>.</li>
+    <li><strong>Compute dissolved Xe:</strong> From x<sub>sat</sub> and water amount, calculate moles
+        Xe needed: n<sub>Xe</sub> = x<sub>sat</sub> × n<sub>water</sub> / (1 &minus; x<sub>sat</sub>).</li>
+    <li><strong>Compute Xe volume at tank:</strong> Use the tank EoS to find the molar volume
+        v<sub>m</sub> at (P<sub>tank</sub>, T<sub>tank</sub>), then V = n<sub>Xe</sub> × v<sub>m</sub>.</li>
+  </ol>
+
+  <h3>Hydrate stability</h3>
+  <p>The tool warns if either tank or pore conditions approach the Xe clathrate hydrate boundary
+     (structure I, H-Lw-V equilibrium). The measured boundary spans 273&ndash;343 K and 0.15&ndash;376 MPa
+     [<span class="tag t-ref">Rasoolzadeh et al. 2020</span>] and is interpolated via log-linear fit across
+     87 experimental points. Operating safely below this boundary requires elevated temperature (≥30&ndash;35°C)
+     or moderate pressure limits; beamtime commonly runs at 40&nbsp;&deg;C to ensure a comfortable margin.</p>
+</section>
+
+<section>
+  <h2>13. References</h2>
+  <ol class="refs">
+    <li id="r1">Lemmon, E.W. &amp; Span, R. (2006). Short Fundamental Equations of State for 20
+      Industrial Fluids. <em>J. Chem. Eng. Data</em> <strong>51</strong>(3), 785&ndash;850.
+      <em>(Xe reference EoS)</em></li>
+    <li id="r2">Bell, I.H., Wronski, J., Quoilin, S. &amp; Lemort, V. (2014). Pure and
+      Pseudo-pure Fluid Thermophysical Property Evaluation and the Open-Source Thermophysical
+      Property Library CoolProp. <em>Ind. Eng. Chem. Res.</em> <strong>53</strong>(6),
+      2498&ndash;2508.</li>
+    <li id="r3">Peng, D.-Y. &amp; Robinson, D.B. (1976). A New Two-Constant Equation of State.
+      <em>Ind. Eng. Chem. Fundam.</em> <strong>15</strong>(1), 59&ndash;64.
+      <em>(fallback only)</em></li>
+    <li id="r4">Krichevsky, I.R. &amp; Kasarnovsky, J.S. (1935). Thermodynamical Calculations of
+      Solubilities of Nitrogen and Hydrogen in Water at High Pressures.
+      <em>J. Am. Chem. Soc.</em> <strong>57</strong>(11), 2168&ndash;2171.</li>
+    <li id="r5">Sander, R. (2015). Compilation of Henry's law constants (version 4.0) for water
+      as solvent. <em>Atmos. Chem. Phys.</em> <strong>15</strong>, 4399&ndash;4981.</li>
+    <li id="r6">Wagner, W. &amp; Pru&szlig;, A. (2002). The IAPWS Formulation 1995 for the
+      Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use.
+      <em>J. Phys. Chem. Ref. Data</em> <strong>31</strong>(2), 387&ndash;535.</li>
+    <li id="r7">Huber, M.L. et al. (2009). New International Formulation for the Viscosity of
+      H<sub>2</sub>O. <em>J. Phys. Chem. Ref. Data</em> <strong>38</strong>(2), 101&ndash;125.</li>
+    <li id="r8">Jähne, B., Heinz, G. &amp; Dietrich, W. (1987). Measurement of the diffusion
+      coefficients of sparingly soluble gases in water. <em>J. Geophys. Res.</em>
+      <strong>92</strong>(C10), 10767&ndash;10776.</li>
+    <li id="r9">Horton, C.W. &amp; Rogers, F.T. (1945). Convection Currents in a Porous Medium.
+      <em>J. Appl. Phys.</em> <strong>16</strong>(6), 367&ndash;370.</li>
+    <li id="r10">Lapwood, E.R. (1948). Convection of a fluid in a porous medium.
+      <em>Proc. Camb. Phil. Soc.</em> <strong>44</strong>(4), 508&ndash;521.</li>
+    <li id="r11">Riaz, A., Hesse, M., Tchelepi, H.A. &amp; Orr, F.M. (2006). Onset of convection
+      in a gravitationally unstable diffusive boundary layer in porous media.
+      <em>J. Fluid Mech.</em> <strong>548</strong>, 87&ndash;111.</li>
+    <li id="r12">Slim, A.C. (2014). Solutal-convection regimes in a two-dimensional porous
+      medium. <em>J. Fluid Mech.</em> <strong>741</strong>, 461&ndash;491.</li>
+    <li id="r13">Kozeny, J. (1927). &Uuml;ber kapillare Leitung des Wassers im Boden.
+      <em>Sitzungsber. Akad. Wiss. Wien</em> <strong>136</strong>, 271&ndash;306.</li>
+    <li id="r14">Carman, P.C. (1937). Fluid flow through granular beds.
+      <em>Trans. Inst. Chem. Eng.</em> <strong>15</strong>, 150&ndash;166.</li>
+    <li id="r15">Hubbell, J.H. &amp; Seltzer, S.M. (2004). Tables of X-Ray Mass Attenuation
+      Coefficients and Mass Energy-Absorption Coefficients. <em>NIST Standard Reference
+      Database 126.</em></li>
+    <li id="r16">Berger, M.J. et al. XCOM: Photon Cross Sections Database.
+      <em>NIST Standard Reference Database 8.</em></li>
+    <li id="r17">Moore, J.C., Battino, R., Rettich, T.R., Handa, Y.P. &amp; Wilhelm, E. (1982).
+      Partial molar volumes of gases at infinite dilution in water at 298.15 K.
+      <em>J. Chem. Eng. Data</em> <strong>27</strong>(1), 22&ndash;24.</li>
+    <li id="r18">Abraham, M.H. &amp; Matteoli, E. (1988). The temperature variation of the
+      hydrophobic effect. <em>J. Chem. Soc., Faraday Trans. 1</em> <strong>84</strong>,
+      1985&ndash;2000. <em>(H<sup>cp</sup> and &Delta;<sub>soln</sub>H/R for Xe)</em></li>
+    <li id="r19">Clever, H.L. (ed.). <em>Krypton, Xenon and Radon &mdash; Gas Solubilities.</em>
+      IUPAC Solubility Data Series, Vol. 2, Pergamon (1979).
+      <em>(independently gives the same H<sup>cp</sup> and 2300 K)</em></li>
+    <li id="r20">Fern&aacute;ndez-Prini, R., Alvarez, J.L. &amp; Harvey, A.H. (2003).
+      Henry&rsquo;s constants and vapor-liquid distribution constants for gaseous solutes in
+      H<sub>2</sub>O and D<sub>2</sub>O at high temperatures. <em>J. Phys. Chem. Ref. Data</em>
+      <strong>32</strong>(2), 903&ndash;916. <em>(gives 2200 K)</em></li>
+    <li id="r21">Makogon, T.Y., Mehta, A.P. &amp; Sloan, E.D. (1996). Structure H and Structure I
+      Hydrate Equilibrium Data for 2,2-Dimethylbutane with Methane and Xenon.
+      <em>J. Chem. Eng. Data</em> <strong>41</strong>(2), 315&ndash;318.
+      doi:<a href="https://doi.org/10.1021/je950126p">10.1021/je950126p</a>
+      <em>(sI Xe hydrate equilibria, 273&ndash;288 K / 0.155&ndash;0.698 MPa)</em></li>
+    <li id="r22">Rasoolzadeh, A., Aaldijk, L., Raeissi, S., Shariati, A. &amp; Peters, C.J.
+      (2020). Experimental investigation and thermodynamic modeling of xenon clathrate hydrate
+      stability conditions. <em>Fluid Phase Equilibria</em> <strong>512</strong>, 112528.
+      doi:<a href="https://doi.org/10.1016/j.fluid.2020.112528">10.1016/j.fluid.2020.112528</a>
+      <em>(87 L<sub>w</sub>&ndash;H&ndash;V points over 273.15&ndash;343.75 K and
+      0.15&ndash;376 MPa &mdash; this spans the operating range directly and should REPLACE the
+      two-point interpolation in &sect;3 once the tabulated data are in hand)</em></li>
+    <li id="r23">Kennan, R.P. &amp; Pollack, G.L. (1990). Pressure dependence of the solubility
+      of nitrogen, argon, krypton, and xenon in water. <em>J. Chem. Phys.</em>
+      <strong>93</strong>(4), 2724&ndash;2735.
+      doi:<a href="https://doi.org/10.1063/1.458911">10.1063/1.458911</a>
+      <em>(high-pressure solubility; source of the large apparent partial molar volume)</em></li>
+  </ol>
+  <div class="note">Citations for the underlying formulations are given from standard sources.
+    Please verify each against the original before quoting it in a publication &mdash;
+    particularly the numeric parameter values flagged
+    <span class="tag t-est">estimated</span> in &sect;10.</div>
+</section>
+
+</div>
+</body>
+</html>
