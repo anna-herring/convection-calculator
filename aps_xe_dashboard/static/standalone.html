@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APS Xe Saturation Calculator</title>
+<style>
+  :root{--bg:#f5f6fa;--panel:#fff;--border:#dde1ea;--accent:#2c5f8a;--accent2:#3a7ebf;
+        --text:#1e2530;--muted:#6b7280;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--radius:8px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:20px;}
+  header{background:var(--accent);color:#fff;padding:13px 22px;border-radius:var(--radius);margin-bottom:20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header h1{font-size:1.1rem;font-weight:600;}
+  header span{font-size:.8rem;opacity:.8;}
+  .container{max-width:900px;margin:0 auto;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:15px;}
+  .section-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+  @media(max-width:600px){.grid{grid-template-columns:1fr;}}
+  label.field{display:flex;flex-direction:column;gap:3px;font-size:.8rem;margin-bottom:12px;}
+  label.field .hint{color:var(--muted);font-size:.71rem;}
+  input[type=number]{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:5px;font-size:.85rem;background:var(--bg);color:var(--text);}
+  input[type=number]:focus{outline:2px solid var(--accent2);border-color:transparent;}
+  button{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:.88rem;font-weight:600;cursor:pointer;}
+  button:hover{background:var(--accent2);}
+  button:disabled{background:#9ca3af;cursor:not-allowed;}
+  .results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px;}
+  .result-card{background:#f1f5f9;border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+  .result-card .k{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:3px;}
+  .result-card .v{font-size:1.2rem;font-weight:600;color:var(--accent);}
+  .result-card .s{font-size:.7rem;color:var(--muted);margin-top:3px;}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius);padding:10px 13px;font-size:.76rem;line-height:1.55;color:#78350f;margin-top:15px;}
+  .note.bad{background:#fef2f2;border-color:#fecaca;color:#7f1d1d;}
+  .note.ok{background:#f0fdf4;border-color:#bbf7d0;color:#14532d;}
+  #err{font-size:.75rem;color:var(--bad);min-height:14px;margin-top:10px;}
+  .footer{font-size:.7rem;color:var(--muted);margin-top:30px;text-align:center;}
+</style>
+</head>
+<body>
+<header>
+  <h1>APS Xe Saturation Calculator</h1>
+  <span>Standalone • No server required</span>
+</header>
+
+<div class="container">
+  <div class="card">
+    <div class="section-title">Tank (Xe gas source)</div>
+    <div class="grid">
+      <label class="field">Pressure
+        <input type="number" id="P_tank" value="130" step="5" min="5" max="1500">
+        <span class="hint">PSI</span></label>
+      <label class="field">Temperature
+        <input type="number" id="T_tank" value="20" step="1" min="1" max="90">
+        <span class="hint">°C</span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Target (pore water saturation)</div>
+    <div class="grid">
+      <label class="field">Pressure
+        <input type="number" id="P_pore" value="10" step="0.5" min="0.5" max="60">
+        <span class="hint">MPa</span></label>
+      <label class="field">Temperature
+        <input type="number" id="T_pore" value="40" step="1" min="1" max="90">
+        <span class="hint">°C</span></label>
+      <label class="field">Water volume
+        <input type="number" id="V_water" value="7" step="0.1" min="0.1" max="100000">
+        <span class="hint">ml</span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <button onclick="run()">Calculate Xe Volume</button>
+    <div id="err"></div>
+  </div>
+
+  <div class="card" id="results-card" style="display:none;">
+    <div class="section-title">Results</div>
+    <div class="results">
+      <div class="result-card">
+        <div class="k">Xe volume at tank</div>
+        <div class="v"><span id="V_xe_tank">—</span> ml</div>
+        <div class="s">at <span id="P_tank_label">130</span> PSI / <span id="T_tank_label">20</span>°C</div>
+      </div>
+      <div class="result-card">
+        <div class="k">Saturation mole fraction</div>
+        <div class="v"><span id="x_sat">—</span></div>
+        <div class="s">at pore conditions</div>
+      </div>
+      <div class="result-card">
+        <div class="k">Moles Xe dissolved</div>
+        <div class="v"><span id="n_xe">—</span></div>
+        <div class="s">at saturation</div>
+      </div>
+      <div class="result-card">
+        <div class="k">Xe density at tank</div>
+        <div class="v"><span id="rho_xe">—</span></div>
+        <div class="s">kg/m³</div>
+      </div>
+    </div>
+    <div id="hydrate-note"></div>
+  </div>
+
+  <div class="card footer">
+    Xenon equation of state: Peng–Robinson cubic EoS (CoolProp Helmholtz not available in JavaScript)<br>
+    Henry's law: Krichevsky–Kasarnovsky with Sander compilation constants<br>
+    Hydrate boundary: Rasoolzadeh et al. (2020) log-linear interpolation
+  </div>
+</div>
+
+<script>
+// Constants
+const R = 8.314;
+const R_Latm = 0.08205616;
+const Mw_H2O = 0.018015;
+const Mw_Xe = 0.13129;
+
+// Xe properties
+const Xe = {
+  Tc: 289.73,     // K
+  Pc_atm: 57.64,  // atm
+  omega: 0.0,     // acentric factor
+  Vmp: 46.5,      // cm³/mol partial molar volume
+  H_cp: 4.3e-5,   // mol/(kg·bar) Henry's constant at ref
+  H_dT: 2300,     // K temperature dependence
+};
+
+// Hydrate boundary data: (T_K, P_MPa) from Rasoolzadeh et al. 2020
+const HYDRATE_DATA = [
+  [273.15, 0.153], [273.65, 0.180], [274.15, 0.205], [274.65, 0.235],
+  [275.15, 0.268], [275.65, 0.306], [276.15, 0.350], [276.65, 0.400],
+  [277.15, 0.458], [277.65, 0.524], [278.15, 0.599], [278.65, 0.685],
+  [279.15, 0.783], [279.65, 0.895], [280.15, 1.022], [280.65, 1.167],
+  [281.15, 1.331], [281.65, 1.517], [282.15, 1.727], [282.65, 1.963],
+  [283.15, 2.229], [283.65, 2.527], [284.15, 2.862], [284.65, 3.238],
+  [285.15, 3.660], [285.65, 4.133], [286.15, 4.664], [286.65, 5.260],
+  [287.15, 5.930], [287.65, 6.684], [288.15, 7.532], [288.65, 8.488],
+  [289.15, 9.567], [289.65, 10.792], [290.15, 12.191], [290.65, 13.791],
+  [291.15, 15.621], [291.65, 17.721], [292.15, 20.137], [292.65, 22.917],
+  [293.15, 26.123], [293.65, 29.828], [294.15, 34.120], [294.65, 39.104],
+  [295.15, 44.903], [295.65, 51.668], [296.15, 59.577], [296.65, 68.843],
+  [297.15, 79.617], [297.65, 92.087], [298.15, 106.462], [298.65, 123.000],
+  [299.15, 141.997], [299.65, 163.787], [300.15, 188.742], [300.65, 217.294],
+  [301.15, 249.809], [301.65, 286.681], [302.15, 328.355], [302.65, 375.114],
+  [303.15, 427.284], [303.65, 485.032], [304.15, 548.437], [304.65, 617.447],
+  [305.15, 691.844], [305.65, 771.311], [306.15, 855.333], [306.65, 943.204],
+  [307.15, 1033.95], [307.65, 1126.42], [308.15, 1219.31], [308.65, 1310.38],
+  [309.15, 1397.27], [309.65, 1477.58], [310.15, 1549.70], [310.65, 1612.13],
+  [311.15, 1663.69], [311.65, 1703.64], [312.15, 1731.66], [312.65, 1746.79],
+  [313.15, 1748.51], [313.65, 1726.95], [314.15, 1681.24], [314.65, 1609.77],
+  [315.15, 1511.58], [315.65, 1386.04], [316.15, 1232.58], [316.65, 1050.62],
+  [317.15, 838.58], [317.65, 594.65], [318.15, 317.51], [318.65, 4.61]
+];
+
+// Peng–Robinson EoS
+function pr_eos(T_K, P_atm) {
+  if (P_atm <= 0) return {vm: NaN, fug_Pa: NaN, phi: NaN};
+
+  const Tc = Xe.Tc;
+  const Pc_atm = Xe.Pc_atm;
+  const omega = Xe.omega;
+
+  const k = 0.37464 + 1.54226*omega - 0.26992*omega*omega;
+  const Tr = T_K / Tc;
+  const alpha = Math.pow(1 + k*(1 - Math.sqrt(Tr)), 2);
+  const a = 0.45724 * R_Latm * R_Latm * Tc * Tc / Pc_atm * alpha;
+  const b = 0.07780 * R_Latm * Tc / Pc_atm;
+
+  const A = a * P_atm / (R_Latm * R_Latm * T_K * T_K);
+  const B = b * P_atm / (R_Latm * T_K);
+
+  // Cubic: Z³ - (1-B)Z² + (A - 3B² - 2B)Z - (AB - B² - B³) = 0
+  const a0 = -(A*B - B*B - B*B*B);
+  const a1 = A - 3*B*B - 2*B;
+  const a2 = -(1 - B);
+  const a3 = 1;
+
+  // Cardano's method (simplified for one real root, gas phase)
+  const p = a1 / a3 - a2*a2 / (3*a3*a3);
+  const q = a0 / a3 + 2*a2*a2*a2 / (27*a3*a3*a3) - a1*a2 / (3*a3*a3);
+
+  const disc = Math.pow(q/2, 2) + Math.pow(p/3, 3);
+  if (disc < 0) return {vm: NaN, fug_Pa: NaN, phi: NaN};
+
+  const u = Math.cbrt(-q/2 + Math.sqrt(disc));
+  const v = Math.cbrt(-q/2 - Math.sqrt(disc));
+  const Z = u + v - a2/(3*a3);
+
+  if (Z <= B || Z <= 0) return {vm: NaN, fug_Pa: NaN, phi: NaN};
+
+  const vm = Z * R_Latm * T_K / P_atm * 1000;  // cm³/mol
+
+  const denom = (Z + 2.414*B) / (Z - 0.414*B);
+  if (denom <= 0) return {vm, fug_Pa: NaN, phi: NaN};
+
+  const ln_phi = Z - 1 - Math.log(Z - B) - A/(2*2.414*B)*Math.log(denom);
+  const phi = Math.exp(ln_phi);
+  const fug_Pa = phi * P_atm * 101325;
+
+  return {vm, fug_Pa, phi};
+}
+
+// Water vapor pressure (Antoine)
+function water_vapor_pressure_Pa(T_K) {
+  const T_C = T_K - 273.15;
+  const log_P = 8.07131 - 1730.63 / (233.426 + T_C);
+  return Math.pow(10, log_P) * 133.322;  // Pa
+}
+
+// Henry's law with Krichevsky–Kasarnovsky
+function henry_MPa(T_K) {
+  const H_ref_MPa = 0.101325 / (Xe.H_cp * Mw_H2O);
+  return H_ref_MPa / Math.exp(Xe.H_dT * (1.0/T_K - 1.0/298.15));
+}
+
+// Hydrate boundary interpolation (log-linear)
+function hydrate_pressure_MPa(T_K) {
+  if (T_K < 273.15 || T_K > 318.65) return NaN;
+
+  let i = 0;
+  while (i < HYDRATE_DATA.length - 1 && HYDRATE_DATA[i][0] < T_K) i++;
+
+  if (i === 0) return HYDRATE_DATA[0][1];
+  if (i === HYDRATE_DATA.length) return HYDRATE_DATA[HYDRATE_DATA.length-1][1];
+
+  const [T1, P1] = HYDRATE_DATA[i-1];
+  const [T2, P2] = HYDRATE_DATA[i];
+
+  const frac = (T_K - T1) / (T2 - T1);
+  const log_P = Math.log(P1) + frac * (Math.log(P2) - Math.log(P1));
+  return Math.exp(log_P);
+}
+
+async function run() {
+  const errDiv = document.getElementById('err');
+  errDiv.innerText = '';
+
+  try {
+    // Convert PSI to MPa (1 PSI = 0.00689476 MPa)
+    const P_tank_PSI = +document.getElementById('P_tank').value;
+    const P_tank_MPa = P_tank_PSI * 0.00689476;
+
+    // Convert ml to L (1 ml = 0.001 L)
+    const V_water_ml = +document.getElementById('V_water').value;
+    const V_water_L = V_water_ml * 0.001;
+
+    const req = {
+      P_tank_MPa: P_tank_MPa,
+      T_tank_C: +document.getElementById('T_tank').value,
+      P_pore_MPa: +document.getElementById('P_pore').value,
+      T_pore_C: +document.getElementById('T_pore').value,
+      V_water_L: V_water_L,
+    };
+
+    // Conversions
+    const T_tank_K = req.T_tank_C + 273.15;
+    const T_pore_K = req.T_pore_C + 273.15;
+    const P_tank_atm = req.P_tank_MPa / 0.101325;
+
+    // Tank state
+    const tank_eos = pr_eos(T_tank_K, P_tank_atm);
+    if (!isFinite(tank_eos.phi)) {
+      errDiv.innerText = 'Tank EoS failed: state not physical';
+      return;
+    }
+
+    // Henry constant and partition coefficient at pore
+    const H_pore = henry_MPa(T_pore_K);
+    const P_sat_w = water_vapor_pressure_Pa(T_pore_K) * 1e-6;  // MPa
+    const Vmp_cm3_mol = Xe.Vmp;
+    const Vmp_m3_mol = Vmp_cm3_mol * 1e-6;
+
+    const K_K = H_pore * Math.exp(Vmp_m3_mol * (req.P_pore_MPa - P_sat_w) / (R * T_pore_K));
+
+    // Saturation mole fraction
+    const x_sat = tank_eos.fug_Pa / (K_K * 1e6);  // K_K is in Pa⁻¹, so K_K*1e6 for MPa
+
+    // Moles water and Xe
+    const n_water = (req.V_water_L * 1e3) / 18.015;  // ml to cm³ to g to mol
+    const n_xe = x_sat * n_water / (1 - x_sat);
+
+    // Xe volume at tank (liters)
+    const vm_tank_L = tank_eos.vm / 1000;  // cm³/mol to L/mol
+    const V_xe_tank_L = n_xe * vm_tank_L;
+    const V_xe_tank_ml = V_xe_tank_L * 1000;
+
+    // Xe density at tank
+    const rho_xe_tank = (Mw_Xe * 1000) / tank_eos.vm;  // kg/m³
+
+    // Hydrate check
+    const P_hydrate_tank = hydrate_pressure_MPa(T_tank_K);
+    const P_hydrate_pore = hydrate_pressure_MPa(T_pore_K);
+
+    let warning = '';
+    if (req.P_tank_MPa > P_hydrate_tank) {
+      warning = `Tank at risk: ${req.P_tank_MPa.toFixed(2)} MPa > ${P_hydrate_tank.toFixed(2)} MPa boundary`;
+    }
+    if (req.P_pore_MPa > P_hydrate_pore) {
+      if (warning) warning += ' | ';
+      warning += `Pore at risk: ${req.P_pore_MPa.toFixed(2)} MPa > ${P_hydrate_pore.toFixed(2)} MPa boundary`;
+    }
+
+    // Display results
+    document.getElementById('V_xe_tank').innerText = V_xe_tank_ml.toFixed(1);
+    document.getElementById('x_sat').innerText = (x_sat*1000).toFixed(1) + ' mmol/mol';
+    document.getElementById('n_xe').innerText = n_xe.toFixed(3);
+    document.getElementById('rho_xe').innerText = rho_xe_tank.toFixed(1);
+
+    document.getElementById('P_tank_label').innerText = P_tank_PSI.toFixed(0);
+    document.getElementById('T_tank_label').innerText = req.T_tank_C.toFixed(0);
+
+    // Hydrate notes
+    const hydNote = document.getElementById('hydrate-note');
+    if (warning) {
+      hydNote.className = 'note bad';
+      hydNote.innerHTML = '<strong>Hydrate warning:</strong> ' + warning;
+    } else {
+      hydNote.className = 'note ok';
+      hydNote.innerHTML = '<strong>Hydrate-free.</strong> Tank: ~' + P_hydrate_tank.toFixed(2) +
+                          ' MPa bound at ' + req.T_tank_C.toFixed(0) + '°C; Pore: ~' +
+                          P_hydrate_pore.toFixed(2) + ' MPa at ' + req.T_pore_C.toFixed(0) + '°C.';
+    }
+
+    document.getElementById('results-card').style.display = 'block';
+  } catch (e) {
+    errDiv.innerText = 'Error: ' + e.message;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  run();
+});
+</script>
+</body>
+</html>
