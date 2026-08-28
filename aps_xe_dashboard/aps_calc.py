@@ -406,3 +406,84 @@ def calculate(P_min_MPa=1.0, P_max_MPa=20.0, T_C=40.0,
         "edge_jump": xray.edge_jump(),
     }
     return out
+
+
+def saturation_xe_volume(P_tank_MPa, T_tank_C, P_pore_MPa, T_pore_C, V_water_L):
+    """Volume of Xe gas at tank conditions to saturate water at pore conditions.
+
+    Calculate how much Xe gas (at tank pressure/temperature) is needed to
+    achieve 100% saturation of a given volume of water at different pressure
+    and temperature conditions.
+
+    Parameters:
+        P_tank_MPa, T_tank_C: tank pressure and temperature (Xe gas)
+        P_pore_MPa, T_pore_C: target pore pressure and temperature (saturated water)
+        V_water_L: volume of water to saturate [liters]
+
+    Returns: dict with keys:
+        V_xe_tank_L: volume of Xe gas at tank conditions [L]
+        x_sat: mole fraction Xe at saturation (pore conditions)
+        n_xe_dissolved: moles of Xe at saturation
+        n_water: moles of water
+        rho_xe_tank: Xe density at tank conditions [kg/m³]
+        P_hydrate_tank: hydrate boundary at tank temperature [MPa]
+        P_hydrate_pore: hydrate boundary at pore temperature [MPa]
+        warning: string or None
+    """
+    T_pore_K = T_pore_C + 273.15
+    T_tank_K = T_tank_C + 273.15
+
+    # Moles of water
+    n_water = (V_water_L * 1e-3 * 1000.0) / Mw_H2O  # L -> m³ -> kg -> mol
+
+    # Xe saturation at pore conditions (Henry + KK correction)
+    P_pore_Pa = P_pore_MPa * 1e6
+    f_pore_Pa, _ = _fugacity_heos(T_pore_K, P_pore_Pa)
+    if not np.isfinite(f_pore_Pa):
+        _, f_atm, _ = _pr_eos(T_pore_K, P_pore_MPa / 0.101325)
+        f_pore_Pa = f_atm * 0.101325 * 1e6 if np.isfinite(f_atm) else P_pore_Pa
+    f_pore_MPa = f_pore_Pa * 1e-6
+
+    Pv_pore = CP.PropsSI("P", "T", T_pore_K, "Q", 0, "Water") * 1e-6
+    KK_pore = _henry_MPa(T_pore_K) * np.exp(XE["Vmp"] * (P_pore_MPa - Pv_pore) / R / T_pore_K)
+    x_sat = f_pore_MPa / KK_pore
+
+    # Moles of Xe dissolved at saturation
+    n_xe = n_water * x_sat / (1.0 - x_sat)
+
+    # Xe density at tank conditions
+    P_tank_Pa = P_tank_MPa * 1e6
+    try:
+        rho_xe_tank = CP.PropsSI("D", "T", T_tank_K, "P", P_tank_Pa, "Xenon")
+    except Exception:
+        # Fallback: Peng-Robinson
+        vm_tank, _, _ = _pr_eos(T_tank_K, P_tank_MPa / 0.101325)
+        if np.isfinite(vm_tank) and vm_tank > 0:
+            rho_xe_tank = XE["Mw"] / vm_tank * 1e6
+        else:
+            # Last resort: ideal gas
+            rho_xe_tank = XE["Mw"] * P_tank_MPa * 1e6 / (R * T_tank_K)
+
+    # Volume of Xe at tank conditions
+    V_xe_tank_m3 = n_xe * XE["Mw"] / rho_xe_tank
+    V_xe_tank_L = V_xe_tank_m3 * 1000.0
+
+    # Hydrate stability check
+    P_hyd_tank = hydrate_pressure_MPa(T_tank_C)
+    P_hyd_pore = hydrate_pressure_MPa(T_pore_C)
+    warning = None
+    if P_tank_MPa > P_hyd_tank:
+        warning = f"Tank pressure {P_tank_MPa:.2f} MPa exceeds hydrate boundary {P_hyd_tank:.2f} MPa at {T_tank_C}°C — Xe clathrate may form"
+    if P_pore_MPa > P_hyd_pore:
+        warning = f"Pore pressure {P_pore_MPa:.2f} MPa exceeds hydrate boundary {P_hyd_pore:.2f} MPa at {T_pore_C}°C — hydrate-free model invalid"
+
+    return {
+        "V_xe_tank_L": float(V_xe_tank_L),
+        "x_sat": float(x_sat),
+        "n_xe_dissolved": float(n_xe),
+        "n_water": float(n_water),
+        "rho_xe_tank": float(rho_xe_tank),
+        "P_hydrate_tank_MPa": float(P_hyd_tank),
+        "P_hydrate_pore_MPa": float(P_hyd_pore),
+        "warning": warning,
+    }

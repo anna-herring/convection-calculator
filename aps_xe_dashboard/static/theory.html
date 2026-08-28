@@ -52,7 +52,7 @@
 <body>
 <header>
   <h1>Equations &amp; References</h1>
-  <nav><a href="/">&larr; Dashboard</a><a href="/theory.html" class="cur">Theory</a></nav>
+  <nav><a href="/">&larr; Dashboard</a><a href="/saturation.html">Saturation</a><a href="/theory.html" class="cur">Equations</a></nav>
 </header>
 <div class="wrap">
 
@@ -415,7 +415,46 @@
 </section>
 
 <section>
-  <h2>12. References</h2>
+  <h2>12. Xe saturation volume calculator</h2>
+  <p>The saturation calculator estimates the volume of Xe gas (at tank pressure and temperature)
+     required to reach 100% saturation of a given volume of water at target pore conditions.</p>
+
+  <h3>Physical basis</h3>
+  <p>At equilibrium, the dissolved Xe mole fraction in water is determined by Henry's law with
+     Krichevsky&ndash;Kasarnovsky pressure correction:</p>
+  <div class="eq">
+     x<sub>sat</sub> = f / K<sub>K</sub>(T,P)<br><br>
+     K<sub>K</sub>(T,P) = H(T) exp( V&#773;<sub>m</sub>(P &minus; P<sup>sat</sup>_w) / RT )
+     <span class="where">x<sub>sat</sub> mole fraction of dissolved Xe,
+       f fugacity of Xe in the tank (Pa),
+       H(T) Henry's constant (Pa·m³/mol),
+       V&#773;<sub>m</sub> partial molar volume (46.5 cm³/mol),
+       P<sup>sat</sup><sub>w</sub> water vapour pressure.</span></div>
+
+  <h3>Solver procedure</h3>
+  <ol>
+    <li><strong>Compute tank Xe fugacity:</strong> Use the residual-Helmholtz EoS (Lemmon &amp; Span 2006)
+        to find the fugacity coefficient &phi;(P<sub>tank</sub>, T<sub>tank</sub>), then
+        f = &phi; × P<sub>tank</sub>.</li>
+    <li><strong>Compute pore partition coefficient:</strong> Evaluate K<sub>K</sub> at the target pore
+        conditions (P<sub>pore</sub>, T<sub>pore</sub>).</li>
+    <li><strong>Compute saturation mole fraction:</strong> x<sub>sat</sub> = f / K<sub>K</sub>.</li>
+    <li><strong>Compute dissolved Xe:</strong> From x<sub>sat</sub> and water amount, calculate moles
+        Xe needed: n<sub>Xe</sub> = x<sub>sat</sub> × n<sub>water</sub> / (1 &minus; x<sub>sat</sub>).</li>
+    <li><strong>Compute Xe volume at tank:</strong> Use the tank EoS to find the molar volume
+        v<sub>m</sub> at (P<sub>tank</sub>, T<sub>tank</sub>), then V = n<sub>Xe</sub> × v<sub>m</sub>.</li>
+  </ol>
+
+  <h3>Hydrate stability</h3>
+  <p>The tool warns if either tank or pore conditions approach the Xe clathrate hydrate boundary
+     (structure I, H-Lw-V equilibrium). The measured boundary spans 273&ndash;343 K and 0.15&ndash;376 MPa
+     [<span class="tag t-ref">Rasoolzadeh et al. 2020</span>] and is interpolated via log-linear fit across
+     87 experimental points. Operating safely below this boundary requires elevated temperature (≥30&ndash;35°C)
+     or moderate pressure limits; beamtime commonly runs at 40&nbsp;&deg;C to ensure a comfortable margin.</p>
+</section>
+
+<section>
+  <h2>13. References</h2>
   <ol class="refs">
     <li id="r1">Lemmon, E.W. &amp; Span, R. (2006). Short Fundamental Equations of State for 20
       Industrial Fluids. <em>J. Chem. Eng. Data</em> <strong>51</strong>(3), 785&ndash;850.

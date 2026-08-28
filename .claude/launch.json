@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "radionuclide-transport",
+      "runtimeExecutable": "C:\\Users\\User\\anaconda3\\python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--app-dir", "radionuclide_transport", "--port", "8000"],
+      "port": 8000
+    },
+    {
+      "name": "multiphase-props",
+      "runtimeExecutable": "C:\\Users\\u5259522\\AppData\\Local\\anaconda3\\python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--app-dir", "multiphase_props", "--port", "8001"],
+      "port": 8001
+    },
+    {
+      "name": "aps_xe_dashboard",
+      "runtimeExecutable": "C:\\Users\\u5259522\\AppData\\Local\\anaconda3\\python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--app-dir", "aps_xe_dashboard", "--port", "8002"],
+      "port": 8002
+    }
+  ]
+}

@@ -42,5 +42,22 @@ def calculate(req: Req):
     )
 
 
+class SatReq(BaseModel):
+    P_tank_MPa: float = Field(10.0, ge=0.5, le=100.0)
+    T_tank_C: float = Field(20.0, ge=1.0, le=90.0)
+    P_pore_MPa: float = Field(3.0, ge=0.5, le=60.0)
+    T_pore_C: float = Field(40.0, ge=1.0, le=90.0)
+    V_water_L: float = Field(1.0, gt=0.0, le=100.0)
+
+
+@app.post("/api/saturation")
+def saturation(req: SatReq):
+    return aps_calc.saturation_xe_volume(
+        P_tank_MPa=req.P_tank_MPa, T_tank_C=req.T_tank_C,
+        P_pore_MPa=req.P_pore_MPa, T_pore_C=req.T_pore_C,
+        V_water_L=req.V_water_L,
+    )
+
+
 _static = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 app.mount("/", StaticFiles(directory=_static, html=True), name="static")
