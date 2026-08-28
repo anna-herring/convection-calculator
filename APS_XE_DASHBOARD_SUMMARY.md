@@ -6,6 +6,16 @@
 
 ## Quick Start
 
+### Standalone (No Server Required)
+
+**`aps_xe_dashboard/static/standalone.html`** — Pure JavaScript, no backend needed
+- Open directly in browser: `file:///path/to/standalone.html`
+- Deploy to GitHub Pages
+- Embed in any static site
+- Works offline
+
+### Full Dashboard (FastAPI + Frontend)
+
 The APS Xe Dashboard is a FastAPI web tool deployed at `aps_xe_dashboard/` that provides three interactive pages:
 
 1. **Dashboard** (`/`) — Rayleigh–Darcy convection analysis and X-ray attenuation
@@ -114,7 +124,28 @@ Solve: volume of Xe at tank conditions needed to **saturate** that water at pore
 
 ---
 
-## Recent Modifications (2026-08-28)
+## Standalone Version (JavaScript, No Backend)
+
+**New: `aps_xe_dashboard/static/standalone.html`** provides the saturation calculator as pure HTML/JavaScript:
+- **Physics:** Peng–Robinson EoS, Henry's law with Krichevsky–Kasarnovsky, Rasoolzadeh hydrate boundary
+- **No dependencies:** No CoolProp, no FastAPI, no server required
+- **Deployment:** Run locally (`file://`), serve via HTTP, deploy to GitHub Pages, embed anywhere
+- **Identical interface:** PSI tank pressure (130 PSI default), 10 MPa target, ml water volume, ml Xe results
+- **Offline capability:** Works without internet after first load
+
+Use this when:
+- Render deployment fails or is unavailable
+- Running locally without a Python environment
+- Deploying to GitHub Pages or static hosting
+- Embedding in documentation or papers
+- Offline analysis
+
+Physics implementations:
+- Peng–Robinson cubic EoS (Cardano's method, gas-phase root selection)
+- Henry constant temperature dependence via IUPAC compilations
+- Log-linear hydrate boundary interpolation (87 measured points from Rasoolzadeh et al. 2020)
+
+## Recent Modifications (2026-08-28 & 2026-08-29)
 
 ### Saturation calculator interface updates
 1. **Tank pressure:** Changed from MPa to **PSI**, default 130 (≈0.896 MPa)
